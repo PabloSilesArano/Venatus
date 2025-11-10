@@ -1,0 +1,96 @@
+body { margin: 0; font-family: 'Segoe UI', sans-serif; }
+#map { height: 100vh; width: 100%; }
+
+/* Panel principal */
+#panel {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+}
+
+/* Botón hamburguesa */
+#menuBtn {
+  background: white;
+  border: none;
+  font-size: 22px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+#menuBtn:hover { background: #f5f5f5; }
+
+/* Desplegable */
+#menuOpciones {
+  position: absolute;
+  top: 48px;
+  left: 0;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  min-width: 140px;
+  padding: 4px 0;
+}
+#menuOpciones.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+#menuOpciones button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #222;
+  padding: 10px 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.25s ease;
+}
+#menuOpciones button:hover { transform: translateX(6px); }
+
+#archivoCSV { display: none; }
+
+/* Indicador de área */
+.area-tooltip-control {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.9);
+  color: #333;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  z-index: 1000;
+  text-align: center;
+}
+
+/* Puntos del polígono */
+.small-dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2A93EE;
+  border: 2px solid white;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  transform: translate(-50%, -50%);
+}
+.small-div-icon { background: transparent; width:0; height:0; line-height:0; }
+
+/* SOLO MÓVIL */
+@media (max-width: 768px) {
+  #menuBtn { font-size: 30px; padding: 16px 20px; }
+  #menuOpciones { min-width: 200px; top: 68px; }
+  #menuOpciones button { font-size: 22px; padding: 16px 20px; }
+  .area-tooltip-control { font-size: 14px; padding: 6px 10px; }
+  .small-dot { width: 22px; height: 22px; }
+  .leaflet-control-zoom a { width: 50px !important; height: 50px !important; font-size: 40px !important; line-height: 50px !important; }
+}

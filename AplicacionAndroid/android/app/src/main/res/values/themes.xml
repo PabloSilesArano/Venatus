@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Tema principal de la app para AppCompatActivity -->
+    <style name="Theme.GeoQue" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Puedes personalizar colores aquí si quieres -->
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+
+</resources>

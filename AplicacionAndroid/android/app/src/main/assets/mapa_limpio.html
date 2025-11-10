@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venatus</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        .user-marker {
+            font-size: 24px;
+            text-align: center;
+        }
+        .center-marker {
+            font-size: 20px;
+            text-align: center;
+        }
+        .status-overlay {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: 2px solid #333;
+            z-index: 1000;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<div id="status" class="status-overlay" style="display: none;"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Mapa limpio sin controles
+    let map = L.map('map', {
+        zoomControl: false,  // Quitar controles de zoom
+        attributionControl: false  // Quitar atribución
+    }).setView([37.8916, -4.7794], 13);
+
+    // Capa de mapa sin atribución visible
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: ''
+    }).addTo(map);
+
+    let userMarker = null;
+    let cotoPolygon = null;
+
+    // Funciones de zoom para el menú
+    function zoomIn() {
+        map.zoomIn();
+    }
+
+    function zoomOut() {
+        map.zoomOut();
+    }
+
+    function centrarEnUbicacion(lat, lng) {
+        map.setView([lat, lng], 16);
+    }
+
+    function actualizarPosicion(lat, lng) {
+        if (userMarker) {
+            userMarker.setLatLng([lat, lng]);
+        } else {
+            userMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'user-marker',
+                    html: '📍',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 30]
+                })
+            }).addTo(map);
+        }
+    }
+
+    function dibujarCoto(coordenadas) {
+        if (cotoPolygon) {
+            map.removeLayer(cotoPolygon);
+        }
+
+        const latLngs = coordenadas.map(coord => [coord[0], coord[1]]);
+
+        cotoPolygon = L.polygon(latLngs, {
+            color: '#FF6B35',
+            fillColor: '#FF6B35',
+            fillOpacity: 0.3,
+            weight: 4
+        }).addTo(map);
+
+        map.fitBounds(cotoPolygon.getBounds());
+    }
+
+    function actualizarEstado(texto, color) {
+        const statusDiv = document.getElementById('status');
+        if (statusDiv) {
+            statusDiv.textContent = `Estado: ${texto}`;
+            statusDiv.style.backgroundColor = color;
+            statusDiv.style.display = 'block';
+
+            if (texto.includes('DENTRO')) {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+    }
+
+    function limpiarCoto() {
+        if (cotoPolygon) {
+            map.removeLayer(cotoPolygon);
+            cotoPolygon = null;
+        }
+
+        const statusDiv = document.getElementById('status');
+        if (statusDiv) {
+            statusDiv.style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>

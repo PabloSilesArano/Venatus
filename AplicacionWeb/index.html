@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Venatus - Administración</title>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', 'Arial', sans-serif;
+        background: #f0f0f0;
+        color: #333;
+      }
+
+      #map {
+        height: 100%;
+        width: 100%;
+        touch-action: none;
+      }
+
+      #info, #posicion {
+        position: absolute;
+        background: rgba(255,255,255,0.9);
+        color: #333;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-size: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        z-index: 999;
+      }
+
+      #info {
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      #posicion {
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        background: rgba(255,255,255,0.9);
+        color: #333;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-size: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        z-index: 999;
+        text-align: center;
+      }
+
+      #menu {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 1000;
+      }
+
+      #menuToggle {
+        background: rgba(255,255,255,0.8);
+        border: 1px solid rgba(0,0,0,0.1);
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-size: 20px;
+        cursor: pointer;
+        color: #333;
+        font-weight: 600;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+      }
+
+      #menuToggle:hover {
+        background: rgba(255,255,255,1);
+        transform: scale(1.05);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+      }
+
+      #menuItems {
+        display: none;
+        position: absolute;
+        top: 50px;
+        left: 0;
+        background: rgba(255,255,255,0.95);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        transition: all 0.4s ease;
+        transform-origin: top;
+      }
+
+      #menuItems button, #menuItems select {
+        display: block;
+        width: 200px;
+        padding: 12px 20px;
+        border: none;
+        background: transparent;
+        color: #333;
+        text-align: left;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        margin-bottom: 5px;
+      }
+
+      #menuItems button:hover {
+        background: rgba(0,0,0,0.05);
+        transform: translateX(5px);
+      }
+
+      /* Controles de zoom */
+      #zoomControls {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        z-index: 1000;
+      }
+
+      #zoomControls button {
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 5px;
+        background: rgba(255,255,255,0.9);
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #zoomControls button:hover {
+        background: rgba(255,255,255,1);
+        transform: scale(1.1);
+      }
+
+      /* Panel de registro de socios */
+      #registroPanel {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255,255,255,0.95);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        z-index: 1000;
+        width: 300px;
+        display: none;
+      }
+
+      /* Panel de monitoreo de socios */
+      #monitoreoPanel {
+        position: absolute;
+        top: 10px;
+        right: 320px;
+        background: rgba(255,255,255,0.95);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        z-index: 1000;
+        width: 300px;
+        display: none;
+      }
+
+      #registroPanel h3, #monitoreoPanel h3 {
+        margin-top: 0;
+        color: #2A9DF4;
+      }
+
+      #registroPanel input {
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-sizing: border-box;
+      }
+
+      #registroPanel button, #monitoreoPanel button {
+        width: 100%;
+        padding: 12px;
+        background: #2A9DF4;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 10px;
+      }
+
+      #registroPanel button:hover {
+        background: #1e87d4;
+      }
+
+      #btnIniciarMonitoreo {
+        background: #28a745 !important;
+      }
+
+      #btnIniciarMonitoreo:hover {
+        background: #218838 !important;
+      }
+
+      #btnDetenerMonitoreo {
+        background: #dc3545 !important;
+      }
+
+      #btnDetenerMonitoreo:hover {
+        background: #c82333 !important;
+      }
+
+      #listaSocios {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 12px;
+      }
+
+      #cotoActual {
+        background: #f5f5f5;
+        padding: 8px;
+        border-radius: 6px;
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+
+      #estadoMonitoreo {
+        margin-top: 10px;
+        font-size: 11px;
+        text-align: center;
+        color: #666;
+      }
+
+      /* Separador visual en el menú */
+      .menu-separator {
+        height: 1px;
+        background: rgba(0,0,0,0.1);
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="info">Dibuja un polígono para marcar el coto</div>
+    <div id="posicion">Posición actual: ---, ---</div>
+    <div id="map"></div>
+
+    <!-- Panel de registro de socios -->
+    <div id="registroPanel">
+      <h3>Registrar Nuevo Socio</h3>
+      <input type="text" id="regNombre" placeholder="Nombre completo" maxlength="50">
+      <input type="text" id="regUsuario" placeholder="Usuario" maxlength="20">
+      <input type="password" id="regContrasena" placeholder="Contraseña" maxlength="20">
+      <input type="email" id="regEmail" placeholder="Email" maxlength="100">
+      <input type="text" id="regTelefono" placeholder="Teléfono (9 dígitos)" maxlength="9">
+      <button id="btnRegistrarSocio">Registrar Socio</button>
+      <div id="mensajeRegistro" style="margin-top: 10px; font-size: 14px;"></div>
+    </div>
+
+    <!-- Panel de monitoreo de socios -->
+    <div id="monitoreoPanel">
+      <h3>👥 Monitorear Socios</h3>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Coto Seleccionado:</label>
+        <div id="cotoActual">Ningún coto seleccionado</div>
+      </div>
+      
+      <button id="btnIniciarMonitoreo">▶️ Iniciar Monitoreo</button>
+      <button id="btnDetenerMonitoreo" style="display: none;">⏹️ Detener Monitoreo</button>
+      
+      <div style="margin-top: 15px;">
+        <h4 style="margin: 0 0 10px 0; font-size: 14px;">Socios en el Coto:</h4>
+        <div id="listaSocios">
+          <div style="text-align: center; color: #666; padding: 20px;">
+            Monitoreo no activo
+          </div>
+        </div>
+      </div>
+      
+      <div id="estadoMonitoreo"></div>
+    </div>
+
+    <div id="menu">
+      <button id="menuToggle">&#9776;</button>
+      <div id="menuItems">
+        <button id="drawPolygon">Dibujar coto</button>
+        <button id="deletePolygon">Borrar coto</button>
+        <select id="selectArea">
+          <option value="">-- Selecciona un coto --</option>
+        </select>
+        <button id="saveToDB">Guardar coto</button>
+        
+        <!-- Separador y nuevas opciones -->
+        <div class="menu-separator"></div>
+        <button id="registrarSocio">👤 Registrar Socio</button>
+        <button id="monitorearSocios">👥 Monitorear Socios</button>
+      </div>
+    </div>
+
+    <!-- Controles de zoom -->
+    <div id="zoomControls">
+      <button id="zoomIn">+</button>
+      <button id="zoomOut">-</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+    <script>
+      let map = L.map("map").setView([37.8916, -4.7794], 13);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 22,
+        detectRetina: true,
+        attribution: "© OpenStreetMap contributors"
+      }).addTo(map);
+
+      let drawnItems = new L.FeatureGroup();
+      map.addLayer(drawnItems);
+
+      let drawControl = new L.Control.Draw({
+        draw: { polygon: true, polyline: false, rectangle: false, circle: false, marker: false, circlemarker: false },
+        edit: { featureGroup: drawnItems, remove: true }
+      });
+
+      let lastCoords = [];
+      let userMarker = null;
+      let polygonActual = null;
+      let centrado = false;
+
+      // Variables para monitoreo
+      let intervaloMonitoreo = null;
+      let marcadoresSocios = {};
+      let cotoSeleccionadoId = null;
+
+      function puntoDentroPoligono(lat, lng, polyLatLngs) {
+        let x = lng, y = lat, inside = false;
+        for (let i = 0, j = polyLatLngs.length - 1; i < polyLatLngs.length; j = i++) {
+          let xi = polyLatLngs[i].lng, yi = polyLatLngs[i].lat;
+          let xj = polyLatLngs[j].lng, yj = polyLatLngs[j].lat;
+          let intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+          if (intersect) inside = !inside;
+        }
+        return inside;
+      }
+
+      function actualizarPosicion(lat, lng) {
+        const posicionDiv = document.getElementById("posicion");
+        if (!polygonActual) return;
+
+        if (puntoDentroPoligono(lat, lng, polygonActual.getLatLngs()[0])) {
+          if (userMarker) userMarker.setLatLng([lat, lng]);
+          else userMarker = L.marker([lat, lng], { title: "Tu ubicación actual" }).addTo(map);
+          posicionDiv.style.display = "block";
+          posicionDiv.textContent = `Posición actual: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+          if (!centrado) {
+            map.setView([lat, lng], 17);
+            centrado = true;
+          }
+        } else {
+          if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+          posicionDiv.style.display = "none";
+        }
+      }
+
+      function iniciarUbicacion() {
+        if (navigator.geolocation) {
+          navigator.geolocation.watchPosition(
+            pos => {
+              const { latitude, longitude } = pos.coords;
+              actualizarPosicion(latitude, longitude);
+            },
+            err => console.error("Error obteniendo la ubicación:", err),
+            { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+          );
+        } else {
+          alert("La geolocalización no está soportada en este dispositivo.");
+        }
+      }
+
+      window.addEventListener("load", () => {
+        iniciarUbicacion();
+        cargarAreas();
+      });
+
+      map.on(L.Draw.Event.CREATED, e => {
+        let layer = e.layer;
+        drawnItems.clearLayers();
+        drawnItems.addLayer(layer);
+        polygonActual = layer;
+        calcularArea(layer);
+        guardarCoordenadas(layer);
+      });
+
+      map.on('draw:edited', e => {
+        e.layers.eachLayer(layer => {
+          polygonActual = layer;
+          guardarCoordenadas(layer);
+          calcularArea(layer);
+        });
+      });
+
+      map.on(L.Draw.Event.DELETED, () => {
+        polygonActual = null;
+        if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+        const posicionDiv = document.getElementById("posicion");
+        posicionDiv.style.display = "none";
+        posicionDiv.textContent = "Posición actual: ---, ---";
+      });
+
+      function calcularArea(layer) {
+        let latlngs = layer.getLatLngs()[0];
+        let area = L.GeometryUtil ? L.GeometryUtil.geodesicArea(latlngs) : 0;
+        let areaKm2 = (area / 1_000_000).toFixed(3);
+        document.getElementById("info").textContent = `Coto: ${area.toFixed(2)} m² (${areaKm2} km²)`;
+      }
+
+      function guardarCoordenadas(layer) {
+        lastCoords = layer.getLatLngs()[0].map(p => ({ lat: p.lat, lng: p.lng }));
+      }
+
+      // --- Menú ---
+      const menuToggle = document.getElementById("menuToggle");
+      const menuItems = document.getElementById("menuItems");
+      menuToggle.addEventListener("click", () => {
+        menuItems.style.display = menuItems.style.display === "block" ? "none" : "block";
+      });
+
+      document.getElementById("zoomIn").addEventListener("click", () => map.zoomIn());
+      document.getElementById("zoomOut").addEventListener("click", () => map.zoomOut());
+
+      document.getElementById("drawPolygon").addEventListener("click", () => {
+        const drawPolygon = new L.Draw.Polygon(map, drawControl.options.draw.polygon);
+        drawPolygon.enable();
+      });
+
+      document.getElementById("deletePolygon").addEventListener("click", () => {
+        drawnItems.clearLayers();
+        polygonActual = null;
+        if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+        document.getElementById("posicion").style.display = "none";
+        document.getElementById("posicion").textContent = "Posición actual: ---, ---";
+      });
+
+      async function guardarEnFirebird() {
+        if (lastCoords.length === 0) {
+          alert("No hay coordenadas para guardar.");
+          return;
+        }
+
+        const nombre = prompt("Introduce un nombre para el área:", "Área 1") || "Área sin nombre";
+
+        try {
+          const respuesta = await fetch("http://localhost:3000/guardar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nombre, coordenadas: lastCoords })
+          });
+
+          const data = await respuesta.json();
+          alert(data.mensaje || "Error al guardar el área.");
+          cargarAreas(); // actualizar lista de áreas
+        } catch (error) {
+          console.error("Error al guardar:", error);
+          alert("Error de conexión al servidor");
+        }
+      }
+
+      document.getElementById("saveToDB").addEventListener("click", guardarEnFirebird);
+
+      async function cargarAreas() {
+        try {
+          console.log("🔄 Cargando áreas...");
+          const res = await fetch("http://localhost:3000/areas");
+          if (!res.ok) {
+            throw new Error(`Error HTTP: ${res.status}`);
+          }
+          const areas = await res.json();
+          console.log("✅ Áreas recibidas:", areas);
+
+          const select = document.getElementById("selectArea");
+          select.innerHTML = '<option value="">-- Selecciona un coto --</option>';
+
+          areas.forEach(area => {
+            const option = document.createElement("option");
+            option.value = area.id;
+            option.textContent = area.nombre;
+            select.appendChild(option);
+          });
+
+          console.log(`📋 ${areas.length} áreas cargadas en el select`);
+        } catch (err) {
+          console.error("❌ Error cargando áreas:", err);
+          alert("Error al cargar las áreas: " + err.message);
+        }
+      }
+
+      document.getElementById("selectArea").addEventListener("change", async function() {
+        const selectedId = this.value;
+        if (!selectedId) {
+          drawnItems.clearLayers();
+          polygonActual = null;
+          cotoSeleccionadoId = null;
+          document.getElementById('cotoActual').textContent = 'Ningún coto seleccionado';
+          detenerMonitoreo();
+          return;
+        }
+
+        try {
+          console.log("🔄 Solicitando área ID:", selectedId);
+          const res = await fetch(`http://localhost:3000/areas/${selectedId}`);
+          
+          if (!res.ok) {
+            const errorText = await res.text();
+            console.error("❌ Error HTTP:", res.status, errorText);
+            alert("Error al cargar el área: " + errorText);
+            return;
+          }
+          
+          const area = await res.json();
+          console.log("📌 Área recibida:", area);
+
+          if (!area.coords || area.coords.length === 0) {
+            console.warn("⚠️ No hay coordenadas en esta área:", area);
+            alert("Esta área no tiene coordenadas definidas");
+            return;
+          }
+
+          console.log("📍 Coordenadas a dibujar:", area.coords);
+          
+          drawnItems.clearLayers();
+          const polygon = L.polygon(area.coords, { 
+            color: "#2A9DF4", 
+            weight: 2,
+            fillOpacity: 0.3 
+          }).addTo(drawnItems);
+          
+          map.fitBounds(polygon.getBounds());
+          polygonActual = polygon;
+          calcularArea(polygon);
+          guardarCoordenadas(polygon);
+          centrado = false;
+          
+          // Configurar monitoreo para este coto
+          cotoSeleccionadoId = selectedId;
+          document.getElementById('cotoActual').textContent = area.nombre;
+          
+          // Mostrar panel de monitoreo y iniciar automáticamente
+          document.getElementById('monitoreoPanel').style.display = 'block';
+          iniciarMonitoreo();
+          
+          console.log("✅ Área cargada correctamente");
+          
+        } catch (err) {
+          console.error("❌ Error cargando área:", err);
+          alert("Error al cargar el área: " + err.message);
+        }
+      });
+
+      // ========== FUNCIONALIDAD DE REGISTRO DE SOCIOS ==========
+      
+      document.getElementById('registrarSocio').addEventListener('click', function() {
+        const panel = document.getElementById('registroPanel');
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        menuItems.style.display = 'none';
+      });
+
+      document.getElementById('btnRegistrarSocio').addEventListener('click', async function() {
+        const nombre = document.getElementById('regNombre').value.trim();
+        const usuario = document.getElementById('regUsuario').value.trim();
+        const contrasena = document.getElementById('regContrasena').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const telefono = document.getElementById('regTelefono').value.trim();
+
+        const mensajeDiv = document.getElementById('mensajeRegistro');
+
+        if (!nombre || !usuario || !contrasena || !email || !telefono) {
+          mensajeDiv.innerHTML = '<span style="color: red;">Todos los campos son obligatorios</span>';
+          return;
+        }
+
+        if (telefono.length !== 9 || !/^\d+$/.test(telefono)) {
+          mensajeDiv.innerHTML = '<span style="color: red;">El teléfono debe tener 9 dígitos</span>';
+          return;
+        }
+
+        try {
+          const respuesta = await fetch('http://localhost:3000/registrar-socio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, usuario, contrasena, email, telefono })
+          });
+
+          const data = await respuesta.json();
+
+          if (respuesta.ok) {
+            mensajeDiv.innerHTML = '<span style="color: green;">✅ ' + data.mensaje + '</span>';
+            document.getElementById('regNombre').value = '';
+            document.getElementById('regUsuario').value = '';
+            document.getElementById('regContrasena').value = '';
+            document.getElementById('regEmail').value = '';
+            document.getElementById('regTelefono').value = '';
+            
+            setTimeout(() => {
+              document.getElementById('registroPanel').style.display = 'none';
+              mensajeDiv.innerHTML = '';
+            }, 3000);
+          } else {
+            mensajeDiv.innerHTML = '<span style="color: red;">❌ ' + data.error + '</span>';
+          }
+        } catch (error) {
+          mensajeDiv.innerHTML = '<span style="color: red;">❌ Error de conexión con el servidor</span>';
+          console.error('Error:', error);
+        }
+      });
+
+      // ========== FUNCIONALIDAD DE MONITOREO DE SOCIOS ==========
+
+      document.getElementById('monitorearSocios').addEventListener('click', function() {
+        const panel = document.getElementById('monitoreoPanel');
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        menuItems.style.display = 'none';
+      });
+
+      // Función para actualizar la lista de socios
+      async function actualizarSociosEnCoto() {
+        if (!cotoSeleccionadoId) {
+          console.log("❌ No hay coto seleccionado para monitorear");
+          return;
+        }
+        
+        try {
+          const response = await fetch(`http://localhost:3000/monitoreo/coto/${cotoSeleccionadoId}/socios`);
+          const data = await response.json();
+          
+          if (response.ok) {
+            actualizarListaSocios(data.socios);
+            actualizarMarcadoresEnMapa(data.socios);
+            document.getElementById('estadoMonitoreo').textContent = 
+                `Última actualización: ${new Date().toLocaleTimeString()} - ${data.totalSocios} socios`;
+          } else {
+            document.getElementById('estadoMonitoreo').textContent = `Error: ${data.error}`;
+          }
+        } catch (error) {
+          console.error('Error al obtener socios:', error);
+          document.getElementById('estadoMonitoreo').textContent = 'Error de conexión';
+        }
+      }
+
+      // Actualizar lista en el panel
+      function actualizarListaSocios(socios) {
+        const listaDiv = document.getElementById('listaSocios');
+        
+        if (socios.length === 0) {
+          listaDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 10px;">No hay socios en el coto</div>';
+          return;
+        }
+        
+        listaDiv.innerHTML = socios.map(socio => `
+          <div style="padding: 8px; border-bottom: 1px solid #eee; margin-bottom: 5px;">
+            <strong>${socio.nombre}</strong><br>
+            <small>📍 ${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}</small><br>
+            <small style="color: #28a745;">✅ En el coto</small>
+          </div>
+        `).join('');
+      }
+
+      // Actualizar marcadores en el mapa
+      function actualizarMarcadoresEnMapa(socios) {
+        // Limpiar marcadores anteriores
+        Object.values(marcadoresSocios).forEach(marker => {
+          if (marker) map.removeLayer(marker);
+        });
+        marcadoresSocios = {};
+        
+        // Agregar nuevos marcadores
+        socios.forEach(socio => {
+          const marker = L.marker([socio.lat, socio.lng])
+            .bindPopup(`<b>${socio.nombre}</b><br>📍 En el coto<br>${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}`)
+            .addTo(map);
+          
+          marcadoresSocios[socio.id] = marker;
+        });
+      }
+
+      // Controles de monitoreo
+      function iniciarMonitoreo() {
+        if (intervaloMonitoreo) {
+          clearInterval(intervaloMonitoreo);
+        }
+        
+        intervaloMonitoreo = setInterval(actualizarSociosEnCoto, 5000); // Actualizar cada 5 segundos
+        document.getElementById('btnIniciarMonitoreo').style.display = 'none';
+        document.getElementById('btnDetenerMonitoreo').style.display = 'block';
+        document.getElementById('estadoMonitoreo').textContent = 'Monitoreo activo - Cargando...';
+        
+        // Primera actualización inmediata
+        actualizarSociosEnCoto();
+      }
+
+      function detenerMonitoreo() {
+        if (intervaloMonitoreo) {
+          clearInterval(intervaloMonitoreo);
+          intervaloMonitoreo = null;
+        }
+        
+        document.getElementById('btnIniciarMonitoreo').style.display = 'block';
+        document.getElementById('btnDetenerMonitoreo').style.display = 'none';
+        document.getElementById('estadoMonitoreo').textContent = 'Monitoreo detenido';
+        
+        // Limpiar marcadores
+        Object.values(marcadoresSocios).forEach(marker => {
+          if (marker) map.removeLayer(marker);
+        });
+        marcadoresSocios = {};
+        
+        // Limpiar lista
+        document.getElementById('listaSocios').innerHTML = 
+          '<div style="text-align: center; color: #666; padding: 20px;">Monitoreo no activo</div>';
+      }
+
+      document.getElementById('btnIniciarMonitoreo').addEventListener('click', iniciarMonitoreo);
+      document.getElementById('btnDetenerMonitoreo').addEventListener('click', detenerMonitoreo);
+
+      // Cerrar paneles al hacer clic fuera de ellos
+      document.addEventListener('click', function(event) {
+        const registroPanel = document.getElementById('registroPanel');
+        const monitoreoPanel = document.getElementById('monitoreoPanel');
+        const menuBtn = document.getElementById('menuToggle');
+        const registrarBtn = document.getElementById('registrarSocio');
+        const monitorearBtn = document.getElementById('monitorearSocios');
+        
+        if (registroPanel.style.display === 'block' && 
+            !registroPanel.contains(event.target) && 
+            !menuBtn.contains(event.target) &&
+            !registrarBtn.contains(event.target)) {
+          registroPanel.style.display = 'none';
+        }
+        
+        if (monitoreoPanel.style.display === 'block' && 
+            !monitoreoPanel.contains(event.target) && 
+            !menuBtn.contains(event.target) &&
+            !monitorearBtn.contains(event.target)) {
+          monitoreoPanel.style.display = 'none';
+        }
+      });
+
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/leaflet-geometryutil@0.10.0/src/leaflet.geometryutil.js";
+      document.head.appendChild(script);
+
+      map.zoomControl.remove();
+    </script>
+  </body>
+</html>

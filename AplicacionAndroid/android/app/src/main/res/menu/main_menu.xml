@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_cargar_cotos"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="🌿 Cargar Cotos"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_zoom_in"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="Aumentar Zoom"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_zoom_out"
+        android:icon="@android:drawable/ic_menu_zoom"
+        android:title="Reducir Zoom"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_limpiar"
+        android:icon="@android:drawable/ic_menu_delete"
+        android:title="Limpiar Mapa"
+        app:showAsAction="never" />
+
+</menu>
