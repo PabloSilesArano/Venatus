@@ -480,6 +480,196 @@ app.post("/validar-login", (req, res) => {
   });
 });
 
+// ========== ENDPOINTS PARA ADMINISTRADORES DE COTO ==========
+
+// Endpoint para login de administradores de coto
+app.post("/admin/login", (req, res) => {
+  const { usuario, password, cotoId } = req.body;
+
+  console.log(`🔐 Login admin solicitado - Usuario: ${usuario}, Coto: ${cotoId}`);
+
+  if (!usuario || !password || !cotoId) {
+    return res.status(400).json({ error: "Todos los campos son obligatorios" });
+  }
+
+  Firebird.attach(dbOptions, (err, db) => {
+    if (err) {
+      console.error("❌ Error conectando a Firebird:", err.message);
+      return res.status(500).json({ error: "Error de conexión a Firebird" });
+    }
+
+    // Verificar credenciales del administrador - CORREGIDO
+    const sqlAdmin = `
+      SELECT a.ID, a.USUARIO, a.NOMBRE, a.EMAIL, a.ID_COTO, c.NOMBRE as "COTO_NOMBRE" 
+      FROM ADMIN_COTOS a 
+      JOIN COTOS c ON a.ID_COTO = c.ID 
+      WHERE a.USUARIO = ? AND a.CLAVE = ? AND a.ACTIVO = 1
+    `;
+
+    db.query(sqlAdmin, [usuario, password], (err, result) => {
+      if (err) {
+        db.detach();
+        console.error("❌ Error en consulta admin:", err.message);
+        return res.status(500).json({ error: "Error al verificar credenciales" });
+      }
+
+      if (result.length === 0) {
+        db.detach();
+        console.log("❌ Login admin fallido:", usuario);
+        return res.status(401).json({ error: "Credenciales inválidas o administrador inactivo" });
+      }
+
+      const admin = result[0];
+
+      // Verificar que el admin tenga acceso al coto solicitado
+      if (admin.ID_COTO != cotoId) {
+        db.detach();
+        console.log("❌ Admin no tiene acceso a este coto:", usuario, cotoId);
+        return res.status(403).json({ error: "No tienes permisos para administrar este coto" });
+      }
+
+      // Obtener información completa del coto
+      const sqlCoto = "SELECT ID, NOMBRE, CAST(PERIMETRO AS VARCHAR(8191)) AS PERIMETRO FROM COTOS WHERE ID = ?";
+      db.query(sqlCoto, [cotoId], (err, cotoResult) => {
+        db.detach();
+        
+        if (err || cotoResult.length === 0) {
+          console.error("❌ Error obteniendo coto:", err);
+          return res.status(500).json({ error: "Error al obtener información del coto" });
+        }
+
+        const coto = cotoResult[0];
+        const coords = parsearCoordenadas(coto.PERIMETRO);
+
+        console.log(`✅ Login admin exitoso: ${admin.NOMBRE} - Coto: ${coto.NOMBRE}`);
+
+        res.json({
+          success: true,
+          admin: {
+            id: admin.ID,
+            usuario: admin.USUARIO,
+            nombre: admin.NOMBRE,
+            email: admin.EMAIL
+          },
+          coto: {
+            id: coto.ID,
+            nombre: coto.NOMBRE,
+            coordenadas: coords
+          },
+          message: "Login exitoso"
+        });
+      });
+    });
+  });
+});
+
+// Endpoint para crear administradores (solo para super admin) - VERSIÓN CORREGIDA
+app.post("/admin/crear", (req, res) => {
+  const { usuario, clave, nombre, email, idCoto } = req.body;
+
+  console.log(`👤 Creando admin: ${usuario} para coto: ${idCoto}`);
+
+  Firebird.attach(dbOptions, (err, db) => {
+    if (err) {
+      console.error("❌ Error conectando a Firebird:", err.message);
+      return res.status(500).json({ error: "Error de conexión a Firebird" });
+    }
+
+    // Opción 1: Consulta alternativa sin alias problemático
+    const checkSql = "SELECT COUNT(*) as TOTAL FROM ADMIN_COTOS WHERE USUARIO = ?";
+    
+    db.query(checkSql, [usuario], (err, result) => {
+      if (err) {
+        db.detach();
+        console.error("❌ Error verificando admin:", err.message);
+        return res.status(500).json({ error: "Error al verificar administrador: " + err.message });
+      }
+
+      console.log("📊 Resultado de verificación:", result);
+      
+      // Acceder al resultado - Firebird devuelve los nombres en mayúsculas
+      const count = result[0].TOTAL;
+      
+      if (count > 0) {
+        db.detach();
+        console.log("❌ Admin ya existe:", usuario);
+        return res.status(400).json({ error: "El usuario administrador ya existe" });
+      }
+
+      // Insertar nuevo administrador
+      const insertSql = `
+        INSERT INTO ADMIN_COTOS (USUARIO, CLAVE, NOMBRE, EMAIL, ID_COTO, ACTIVO) 
+        VALUES (?, ?, ?, ?, ?, 1)
+      `;
+
+      db.query(insertSql, [usuario, clave, nombre, email, idCoto], (err) => {
+        db.detach();
+        if (err) {
+          console.error("❌ Error insertando admin:", err.message);
+          return res.status(500).json({ error: "Error al crear administrador: " + err.message });
+        }
+        
+        console.log("✅ Administrador creado correctamente:", usuario);
+        res.json({ message: "✅ Administrador creado correctamente" });
+      });
+    });
+  });
+});
+
+// Endpoint para listar administradores
+app.get("/admin/listar", (req, res) => {
+  Firebird.attach(dbOptions, (err, db) => {
+    if (err) {
+      console.error("❌ Error conectando a Firebird:", err.message);
+      return res.status(500).json({ error: "Error de conexión a Firebird" });
+    }
+
+    const sql = `
+      SELECT a.ID, a.USUARIO, a.NOMBRE, a.EMAIL, a.ID_COTO, a.ACTIVO, c.NOMBRE as "COTO_NOMBRE" 
+      FROM ADMIN_COTOS a 
+      JOIN COTOS c ON a.ID_COTO = c.ID 
+      ORDER BY a.NOMBRE
+    `;
+
+    db.query(sql, (err, result) => {
+      db.detach();
+      if (err) {
+        console.error("❌ Error listando admins:", err.message);
+        return res.status(500).json({ error: "Error al listar administradores" });
+      }
+
+      res.json(result);
+    });
+  });
+});
+
+// Endpoint para cambiar estado de administrador
+app.put("/admin/estado", (req, res) => {
+  const { id, activo } = req.body;
+
+  console.log(`🔄 Cambiando estado admin ID: ${id} a ${activo ? 'ACTIVO' : 'INACTIVO'}`);
+
+  Firebird.attach(dbOptions, (err, db) => {
+    if (err) {
+      console.error("❌ Error conectando a Firebird:", err.message);
+      return res.status(500).json({ error: "Error de conexión a Firebird" });
+    }
+
+    const sql = "UPDATE ADMIN_COTOS SET ACTIVO = ? WHERE ID = ?";
+
+    db.query(sql, [activo, id], (err) => {
+      db.detach();
+      if (err) {
+        console.error("❌ Error actualizando admin:", err.message);
+        return res.status(500).json({ error: "Error al actualizar administrador" });
+      }
+      
+      console.log(`✅ Estado de admin ${id} actualizado a: ${activo}`);
+      res.json({ message: "Estado actualizado correctamente" });
+    });
+  });
+});
+
 // Iniciar servidor con verificación de BD
 app.listen(3000, async () => {
   console.log("🚀 Servidor ejecutándose en http://localhost:3000");

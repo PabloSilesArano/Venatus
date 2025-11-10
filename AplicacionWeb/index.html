@@ -165,8 +165,8 @@
       /* Panel de monitoreo de socios */
       #monitoreoPanel {
         position: absolute;
-        top: 10px;
-        right: 320px;
+        top: 400px;
+        right: 10px;
         background: rgba(255,255,255,0.95);
         padding: 20px;
         border-radius: 12px;
@@ -174,6 +174,93 @@
         z-index: 1000;
         width: 300px;
         display: none;
+      }
+
+      /* Panel de Gestión de Administradores */
+      #adminPanel {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255,255,255,0.98);
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        z-index: 1001;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        display: none;
+      }
+
+      /* Overlay para fondo oscuro */
+      #adminOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        display: none;
+      }
+
+      /* Items de administrador en la lista */
+      .admin-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .admin-info h4 {
+        margin: 0 0 5px 0;
+        color: #333;
+      }
+
+      .admin-info p {
+        margin: 2px 0;
+        font-size: 12px;
+        color: #666;
+      }
+
+      .admin-actions button {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        margin-left: 5px;
+      }
+
+      .btn-activar {
+        background: #28a745;
+        color: white;
+      }
+
+      .btn-desactivar {
+        background: #dc3545;
+        color: white;
+      }
+
+      .btn-editar {
+        background: #ffc107;
+        color: black;
+      }
+
+      .status-activo {
+        color: #28a745;
+        font-weight: bold;
+      }
+
+      .status-inactivo {
+        color: #dc3545;
+        font-weight: bold;
       }
 
       #registroPanel h3, #monitoreoPanel h3 {
@@ -296,6 +383,64 @@
       <div id="estadoMonitoreo"></div>
     </div>
 
+    <!-- Panel de Gestión de Administradores -->
+    <div id="adminPanel">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0; color: #2A9DF4;">👑 Gestión de Administradores</h3>
+        <button onclick="cerrarPanelAdmin()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">×</button>
+      </div>
+
+      <!-- Formulario para crear nuevo administrador -->
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <h4 style="margin-top: 0; color: #333;">➕ Crear Nuevo Administrador</h4>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Nombre Completo</label>
+            <input type="text" id="adminNombre" placeholder="Ej: Juan Pérez" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Usuario</label>
+            <input type="text" id="adminUsuario" placeholder="Ej: juan.admin" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Contraseña</label>
+            <input type="password" id="adminClave" placeholder="Mínimo 6 caracteres" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Email</label>
+            <input type="email" id="adminEmail" placeholder="Ej: juan@email.com" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 10px;">
+          <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Coto Asignado</label>
+          <select id="adminCoto" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="">-- Selecciona un coto --</option>
+          </select>
+        </div>
+
+        <button onclick="crearAdministrador()" style="width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+          ✅ Crear Administrador
+        </button>
+        
+        <div id="mensajeAdmin" style="margin-top: 10px; font-size: 12px; text-align: center;"></div>
+      </div>
+
+      <!-- Lista de administradores existentes -->
+      <div>
+        <h4 style="margin-bottom: 10px; color: #333;">📋 Administradores Existentes</h4>
+        <div id="listaAdmins" style="max-height: 300px; overflow-y: auto; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px;">
+          <div style="text-align: center; color: #666; padding: 20px;">
+            Cargando administradores...
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="menu">
       <button id="menuToggle">&#9776;</button>
       <div id="menuItems">
@@ -310,6 +455,10 @@
         <div class="menu-separator"></div>
         <button id="registrarSocio">👤 Registrar Socio</button>
         <button id="monitorearSocios">👥 Monitorear Socios</button>
+        
+        <!-- NUEVA OPCIÓN PARA GESTIONAR ADMINISTRADORES -->
+        <div class="menu-separator"></div>
+        <button id="gestionarAdmins">👑 Gestionar Administradores</button>
       </div>
     </div>
 
@@ -347,6 +496,9 @@
       let intervaloMonitoreo = null;
       let marcadoresSocios = {};
       let cotoSeleccionadoId = null;
+
+      // Variables para administradores
+      let listaAdministradores = [];
 
       function puntoDentroPoligono(lat, lng, polyLatLngs) {
         let x = lng, y = lat, inside = false;
@@ -737,14 +889,221 @@
       document.getElementById('btnIniciarMonitoreo').addEventListener('click', iniciarMonitoreo);
       document.getElementById('btnDetenerMonitoreo').addEventListener('click', detenerMonitoreo);
 
+      // ========== GESTIÓN DE ADMINISTRADORES ==========
+
+      // Mostrar panel de administradores
+      document.getElementById('gestionarAdmins').addEventListener('click', function() {
+        mostrarPanelAdmin();
+      });
+
+      function mostrarPanelAdmin() {
+        // Crear overlay si no existe
+        if (!document.getElementById('adminOverlay')) {
+          const overlay = document.createElement('div');
+          overlay.id = 'adminOverlay';
+          document.body.appendChild(overlay);
+        }
+        
+        document.getElementById('adminOverlay').style.display = 'block';
+        document.getElementById('adminPanel').style.display = 'block';
+        menuItems.style.display = 'none';
+        
+        // Cargar lista de cotos para el select
+        cargarCotosParaAdmin();
+        // Cargar administradores existentes
+        cargarAdministradores();
+      }
+
+      function cerrarPanelAdmin() {
+        document.getElementById('adminOverlay').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'none';
+      }
+
+      // Cargar cotos para el select de administradores
+      async function cargarCotosParaAdmin() {
+        try {
+          const response = await fetch('http://localhost:3000/areas');
+          const areas = await response.json();
+          
+          const select = document.getElementById('adminCoto');
+          select.innerHTML = '<option value="">-- Selecciona un coto --</option>';
+          
+          areas.forEach(area => {
+            const option = document.createElement('option');
+            option.value = area.id;
+            option.textContent = area.nombre;
+            select.appendChild(option);
+          });
+        } catch (error) {
+          console.error('Error cargando cotos para admin:', error);
+        }
+      }
+
+      // Crear nuevo administrador
+      async function crearAdministrador() {
+        const nombre = document.getElementById('adminNombre').value.trim();
+        const usuario = document.getElementById('adminUsuario').value.trim();
+        const clave = document.getElementById('adminClave').value.trim();
+        const email = document.getElementById('adminEmail').value.trim();
+        const idCoto = document.getElementById('adminCoto').value;
+        const mensajeDiv = document.getElementById('mensajeAdmin');
+
+        // Validaciones
+        if (!nombre || !usuario || !clave || !email || !idCoto) {
+          mensajeDiv.innerHTML = '<span style="color: red;">❌ Todos los campos son obligatorios</span>';
+          return;
+        }
+
+        if (clave.length < 6) {
+          mensajeDiv.innerHTML = '<span style="color: red;">❌ La contraseña debe tener al menos 6 caracteres</span>';
+          return;
+        }
+
+        try {
+          const response = await fetch('http://localhost:3000/admin/crear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              usuario, 
+              clave, 
+              nombre, 
+              email, 
+              idCoto: parseInt(idCoto) 
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            mensajeDiv.innerHTML = '<span style="color: green;">✅ ' + data.message + '</span>';
+            
+            // Limpiar formulario
+            document.getElementById('adminNombre').value = '';
+            document.getElementById('adminUsuario').value = '';
+            document.getElementById('adminClave').value = '';
+            document.getElementById('adminEmail').value = '';
+            document.getElementById('adminCoto').value = '';
+            
+            // Recargar lista de administradores
+            cargarAdministradores();
+            
+            // Ocultar mensaje después de 3 segundos
+            setTimeout(() => {
+              mensajeDiv.innerHTML = '';
+            }, 3000);
+          } else {
+            mensajeDiv.innerHTML = '<span style="color: red;">❌ ' + data.error + '</span>';
+          }
+        } catch (error) {
+          mensajeDiv.innerHTML = '<span style="color: red;">❌ Error de conexión con el servidor</span>';
+          console.error('Error:', error);
+        }
+      }
+
+      // Cargar lista de administradores
+      async function cargarAdministradores() {
+        try {
+          const response = await fetch('http://localhost:3000/admin/listar');
+          const administradores = await response.json();
+          
+          listaAdministradores = administradores;
+          actualizarListaAdministradores(administradores);
+        } catch (error) {
+          console.error('Error cargando administradores:', error);
+          document.getElementById('listaAdmins').innerHTML = 
+            '<div style="text-align: center; color: red; padding: 20px;">Error cargando administradores</div>';
+        }
+      }
+
+      // Actualizar la lista en el panel
+      function actualizarListaAdministradores(admins) {
+        const listaDiv = document.getElementById('listaAdmins');
+        
+        if (admins.length === 0) {
+          listaDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No hay administradores registrados</div>';
+          return;
+        }
+        
+        listaDiv.innerHTML = admins.map(admin => `
+          <div class="admin-item">
+            <div class="admin-info">
+              <h4>${admin.NOMBRE}</h4>
+              <p><strong>Usuario:</strong> ${admin.USUARIO} | <strong>Email:</strong> ${admin.EMAIL || 'No especificado'}</p>
+              <p><strong>Coto:</strong> ${admin.COTO_NOMBRE} | <strong>Estado:</strong> 
+                <span class="${admin.ACTIVO ? 'status-activo' : 'status-inactivo'}">
+                  ${admin.ACTIVO ? 'ACTIVO' : 'INACTIVO'}
+                </span>
+              </p>
+            </div>
+            <div class="admin-actions">
+              ${admin.ACTIVO ? 
+                `<button class="btn-desactivar" onclick="cambiarEstadoAdmin(${admin.ID}, 0)">Desactivar</button>` :
+                `<button class="btn-activar" onclick="cambiarEstadoAdmin(${admin.ID}, 1)">Activar</button>`
+              }
+              <button class="btn-editar" onclick="editarAdministrador(${admin.ID})">Editar</button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Cambiar estado de administrador (activar/desactivar)
+      async function cambiarEstadoAdmin(idAdmin, nuevoEstado) {
+        try {
+          const response = await fetch('http://localhost:3000/admin/estado', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              id: idAdmin,
+              activo: nuevoEstado
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            // Recargar lista
+            cargarAdministradores();
+          } else {
+            alert('Error: ' + data.error);
+          }
+        } catch (error) {
+          alert('Error de conexión');
+          console.error('Error:', error);
+        }
+      }
+
+      // Función para editar administrador (placeholder)
+      function editarAdministrador(idAdmin) {
+        const admin = listaAdministradores.find(a => a.ID === idAdmin);
+        if (admin) {
+          // Aquí puedes implementar la edición
+          alert(`Editar administrador: ${admin.NOMBRE}\n\nEsta funcionalidad está en desarrollo.`);
+        }
+      }
+
+      // Cerrar panel al hacer clic en el overlay
+      document.addEventListener('click', function(event) {
+        const adminPanel = document.getElementById('adminPanel');
+        const adminOverlay = document.getElementById('adminOverlay');
+        const gestionarBtn = document.getElementById('gestionarAdmins');
+        
+        if (adminOverlay && adminOverlay.style.display === 'block' && 
+            event.target === adminOverlay) {
+          cerrarPanelAdmin();
+        }
+      });
+
       // Cerrar paneles al hacer clic fuera de ellos
       document.addEventListener('click', function(event) {
         const registroPanel = document.getElementById('registroPanel');
         const monitoreoPanel = document.getElementById('monitoreoPanel');
+        const adminPanel = document.getElementById('adminPanel');
         const menuBtn = document.getElementById('menuToggle');
         const registrarBtn = document.getElementById('registrarSocio');
         const monitorearBtn = document.getElementById('monitorearSocios');
+        const gestionarBtn = document.getElementById('gestionarAdmins');
         
+        // Cerrar registro panel si se hace clic fuera
         if (registroPanel.style.display === 'block' && 
             !registroPanel.contains(event.target) && 
             !menuBtn.contains(event.target) &&
@@ -752,12 +1111,15 @@
           registroPanel.style.display = 'none';
         }
         
+        // Cerrar monitoreo panel si se hace clic fuera
         if (monitoreoPanel.style.display === 'block' && 
             !monitoreoPanel.contains(event.target) && 
             !menuBtn.contains(event.target) &&
             !monitorearBtn.contains(event.target)) {
           monitoreoPanel.style.display = 'none';
         }
+
+        // Cerrar admin panel si se hace clic fuera (ya manejado arriba)
       });
 
       const script = document.createElement("script");
