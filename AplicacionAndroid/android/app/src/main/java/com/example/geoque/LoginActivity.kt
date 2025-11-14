@@ -75,6 +75,10 @@ class LoginActivity : AppCompatActivity() {
             put("contrasena", contrasena)
         }
 
+        Log.d("LOGIN", "🔐 Intentando login...")
+        Log.d("LOGIN", "📤 URL: $url")
+        Log.d("LOGIN", "📤 JSON enviado: $json")
+
         val body = RequestBody.create("application/json; charset=utf-8".toMediaType(), json.toString())
 
         val request = Request.Builder()
@@ -82,8 +86,6 @@ class LoginActivity : AppCompatActivity() {
             .post(body)
             .addHeader("Content-Type", "application/json")
             .build()
-
-        Log.d("LOGIN", "🔐 Validando credenciales para: $usuario")
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
@@ -97,7 +99,9 @@ class LoginActivity : AppCompatActivity() {
 
             override fun onResponse(call: Call, response: Response) {
                 val respuesta = response.body?.string() ?: ""
-                Log.d("LOGIN", "📥 Respuesta login: ${response.code} - $respuesta")
+                Log.d("LOGIN", "📥 Código HTTP: ${response.code}")
+                Log.d("LOGIN", "📥 Respuesta CRUDA: $respuesta")
+                Log.d("LOGIN", "📥 Headers: ${response.headers}")
 
                 runOnUiThread {
                     dismissProgressDialog()
@@ -106,10 +110,14 @@ class LoginActivity : AppCompatActivity() {
                     when {
                         response.isSuccessful -> {
                             try {
+                                Log.d("LOGIN", "✅ Respuesta exitosa, procesando JSON...")
                                 val jsonResponse = JSONObject(respuesta)
+
                                 if (jsonResponse.getBoolean("valido")) {
                                     val nombreUsuario = jsonResponse.getString("nombre")
                                     val idUsuario = jsonResponse.getInt("id")
+
+                                    Log.d("LOGIN", "✅ Login exitoso - Usuario: $nombreUsuario, ID: $idUsuario")
 
                                     Toast.makeText(this@LoginActivity, "✅ Bienvenido $nombreUsuario", Toast.LENGTH_SHORT).show()
 
@@ -119,17 +127,20 @@ class LoginActivity : AppCompatActivity() {
                                     startActivity(intent)
                                     finish()
                                 } else {
+                                    Log.d("LOGIN", "❌ Login fallido - credenciales inválidas")
                                     Toast.makeText(this@LoginActivity, "❌ Usuario o contraseña incorrectos", Toast.LENGTH_LONG).show()
                                 }
                             } catch (e: Exception) {
-                                Toast.makeText(this@LoginActivity, "Error procesando respuesta", Toast.LENGTH_LONG).show()
+                                Log.e("LOGIN", "❌ Error parseando JSON: ${e.message}")
+                                Toast.makeText(this@LoginActivity, "Error procesando respuesta: ${e.message}", Toast.LENGTH_LONG).show()
                             }
                         }
-                        response.code == 401 -> {
-                            Toast.makeText(this@LoginActivity, "❌ Usuario o contraseña incorrectos", Toast.LENGTH_LONG).show()
-                        }
                         else -> {
-                            mostrarErrorConexion("Error del servidor: ${response.code}")
+                            Log.e("LOGIN", "❌ Error HTTP: ${response.code} - $respuesta")
+                            when (response.code) {
+                                401 -> Toast.makeText(this@LoginActivity, "❌ Usuario o contraseña incorrectos", Toast.LENGTH_LONG).show()
+                                else -> mostrarErrorConexion("Error del servidor: ${response.code} - $respuesta")
+                            }
                         }
                     }
                 }

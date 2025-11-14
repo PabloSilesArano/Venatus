@@ -1,1132 +1,1766 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Venatus - Administración</title>
-
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venatus - Sistema de Administración</title>
+    
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-
+    
     <style>
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        font-family: 'Segoe UI', 'Arial', sans-serif;
-        background: #f0f0f0;
-        color: #333;
-      }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
 
-      #map {
-        height: 100%;
-        width: 100%;
-        touch-action: none;
-      }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-      #info, #posicion {
-        position: absolute;
-        background: rgba(255,255,255,0.9);
-        color: #333;
-        padding: 10px 20px;
-        border-radius: 12px;
-        font-size: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        z-index: 999;
-      }
+        /* Pantalla de Login */
+        #loginScreen {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
 
-      #info {
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-      }
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2A9DF4;
+            margin-bottom: 10px;
+        }
 
-      #posicion {
-        position: absolute;
-        bottom: 50px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: none;
-        background: rgba(255,255,255,0.9);
-        color: #333;
-        padding: 10px 20px;
-        border-radius: 12px;
-        font-size: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        z-index: 999;
-        text-align: center;
-      }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
 
-      #menu {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        z-index: 1000;
-      }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
 
-      #menuToggle {
-        background: rgba(255,255,255,0.8);
-        border: 1px solid rgba(0,0,0,0.1);
-        padding: 10px 16px;
-        border-radius: 10px;
-        font-size: 20px;
-        cursor: pointer;
-        color: #333;
-        font-weight: 600;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-      }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
 
-      #menuToggle:hover {
-        background: rgba(255,255,255,1);
-        transform: scale(1.05);
-        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-      }
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
 
-      #menuItems {
-        display: none;
-        position: absolute;
-        top: 50px;
-        left: 0;
-        background: rgba(255,255,255,0.95);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-        transition: all 0.4s ease;
-        transform-origin: top;
-      }
+        .input-group input:focus {
+            outline: none;
+            border-color: #2A9DF4;
+        }
 
-      #menuItems button, #menuItems select {
-        display: block;
-        width: 200px;
-        padding: 12px 20px;
-        border: none;
-        background: transparent;
-        color: #333;
-        text-align: left;
-        font-size: 16px;
-        cursor: pointer;
-        transition: all 0.25s ease;
-        margin-bottom: 5px;
-      }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #2A9DF4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
 
-      #menuItems button:hover {
-        background: rgba(0,0,0,0.05);
-        transform: translateX(5px);
-      }
+        .btn:hover {
+            background: #1e87d4;
+        }
 
-      /* Controles de zoom */
-      #zoomControls {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        z-index: 1000;
-      }
+        .error-message {
+            color: #e74c3c;
+            margin-top: 15px;
+            padding: 10px;
+            background: #ffeaea;
+            border-radius: 5px;
+            display: none;
+        }
 
-      #zoomControls button {
-        width: 30px;
-        height: 30px;
-        border: none;
-        border-radius: 5px;
-        background: rgba(255,255,255,0.9);
-        font-size: 20px;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
+        /* Pantallas Principales */
+        #superAdminScreen, #adminScreen {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
 
-      #zoomControls button:hover {
-        background: rgba(255,255,255,1);
-        transform: scale(1.1);
-      }
+        /* Botón de Cerrar Sesión - Z-INDEX ALTO */
+        .logout-btn {
+            background: rgba(255,255,255,0.95);
+            border: 2px solid #2A9DF4;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 9999; /* Z-INDEX MUY ALTO */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            color: #2A9DF4;
+        }
 
-      /* Panel de registro de socios */
-      #registroPanel {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: rgba(255,255,255,0.95);
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-        z-index: 1000;
-        width: 300px;
-        display: none;
-      }
+        .logout-btn:hover {
+            background: #2A9DF4;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
 
-      /* Panel de monitoreo de socios */
-      #monitoreoPanel {
-        position: absolute;
-        top: 400px;
-        right: 10px;
-        background: rgba(255,255,255,0.95);
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-        z-index: 1000;
-        width: 300px;
-        display: none;
-      }
+        /* ========== ESTILOS SUPER ADMIN ========== */
+        #map {
+            height: 100%;
+            width: 100%;
+        }
 
-      /* Panel de Gestión de Administradores */
-      #adminPanel {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(255,255,255,0.98);
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        z-index: 1001;
-        width: 90%;
-        max-width: 600px;
-        max-height: 90vh;
-        overflow-y: auto;
-        display: none;
-      }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            z-index: 999;
+        }
 
-      /* Overlay para fondo oscuro */
-      #adminOverlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        z-index: 1000;
-        display: none;
-      }
+        #posicion {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            z-index: 999;
+            text-align: center;
+        }
 
-      /* Items de administrador en la lista */
-      .admin-item {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
+        #menu {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+        }
 
-      .admin-info h4 {
-        margin: 0 0 5px 0;
-        color: #333;
-      }
+        #menuToggle {
+            background: rgba(255,255,255,0.8);
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            color: #333;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
 
-      .admin-info p {
-        margin: 2px 0;
-        font-size: 12px;
-        color: #666;
-      }
+        #menuToggle:hover {
+            background: rgba(255,255,255,1);
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
 
-      .admin-actions button {
-        padding: 5px 10px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 11px;
-        margin-left: 5px;
-      }
+        #menuItems {
+            display: none;
+            position: absolute;
+            top: 50px;
+            left: 0;
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            transition: all 0.4s ease;
+            transform-origin: top;
+        }
 
-      .btn-activar {
-        background: #28a745;
-        color: white;
-      }
+        #menuItems button, #menuItems select {
+            display: block;
+            width: 200px;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #333;
+            text-align: left;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            margin-bottom: 5px;
+        }
 
-      .btn-desactivar {
-        background: #dc3545;
-        color: white;
-      }
+        #menuItems button:hover {
+            background: rgba(0,0,0,0.05);
+            transform: translateX(5px);
+        }
 
-      .btn-editar {
-        background: #ffc107;
-        color: black;
-      }
+        /* Controles de zoom */
+        #zoomControls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 1000;
+        }
 
-      .status-activo {
-        color: #28a745;
-        font-weight: bold;
-      }
+        #zoomControls button {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.9);
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-      .status-inactivo {
-        color: #dc3545;
-        font-weight: bold;
-      }
+        #zoomControls button:hover {
+            background: rgba(255,255,255,1);
+            transform: scale(1.1);
+        }
 
-      #registroPanel h3, #monitoreoPanel h3 {
-        margin-top: 0;
-        color: #2A9DF4;
-      }
+        /* Panel de registro de socios */
+        #registroPanel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            width: 300px;
+            display: none;
+        }
 
-      #registroPanel input {
-        width: 100%;
-        padding: 10px;
-        margin: 8px 0;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        box-sizing: border-box;
-      }
+        /* Panel de monitoreo de socios */
+        #monitoreoPanel {
+            position: absolute;
+            top: 400px;
+            right: 10px;
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            width: 300px;
+            display: none;
+        }
 
-      #registroPanel button, #monitoreoPanel button {
-        width: 100%;
-        padding: 12px;
-        background: #2A9DF4;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 16px;
-        margin-top: 10px;
-      }
+        /* Panel de Gestión de Administradores */
+        #adminPanel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.98);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1001;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: none;
+        }
 
-      #registroPanel button:hover {
-        background: #1e87d4;
-      }
+        /* Controles de zoom - Página Admin Cotos */
+        #adminScreen #zoomControls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 1000;
+        }
 
-      #btnIniciarMonitoreo {
-        background: #28a745 !important;
-      }
+        #adminScreen #zoomControls button {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.9);
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-      #btnIniciarMonitoreo:hover {
-        background: #218838 !important;
-      }
+        #adminScreen #zoomControls button:hover {
+            background: rgba(255,255,255,1);
+            transform: scale(1.1);
+        }
 
-      #btnDetenerMonitoreo {
-        background: #dc3545 !important;
-      }
+        /* Overlay para fondo oscuro */
+        #adminOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
 
-      #btnDetenerMonitoreo:hover {
-        background: #c82333 !important;
-      }
+        /* Items de administrador en la lista */
+        .admin-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-      #listaSocios {
-        max-height: 200px;
-        overflow-y: auto;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        padding: 10px;
-        font-size: 12px;
-      }
+        .admin-info h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
 
-      #cotoActual {
-        background: #f5f5f5;
-        padding: 8px;
-        border-radius: 6px;
-        font-size: 14px;
-        margin-bottom: 10px;
-      }
+        .admin-info p {
+            margin: 2px 0;
+            font-size: 12px;
+            color: #666;
+        }
 
-      #estadoMonitoreo {
-        margin-top: 10px;
-        font-size: 11px;
-        text-align: center;
-        color: #666;
-      }
+        .admin-actions button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 5px;
+        }
 
-      /* Separador visual en el menú */
-      .menu-separator {
-        height: 1px;
-        background: rgba(0,0,0,0.1);
-        margin: 5px 0;
-      }
+        .btn-activar {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-desactivar {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-editar {
+            background: #ffc107;
+            color: black;
+        }
+
+        .status-activo {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .status-inactivo {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        #registroPanel h3, #monitoreoPanel h3 {
+            margin-top: 0;
+            color: #2A9DF4;
+        }
+
+        #registroPanel input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        #registroPanel button, #monitoreoPanel button {
+            width: 100%;
+            padding: 12px;
+            background: #2A9DF4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        #registroPanel button:hover {
+            background: #1e87d4;
+        }
+
+        #btnIniciarMonitoreo {
+            background: #28a745 !important;
+        }
+
+        #btnIniciarMonitoreo:hover {
+            background: #218838 !important;
+        }
+
+        #btnDetenerMonitoreo {
+            background: #dc3545 !important;
+        }
+
+        #btnDetenerMonitoreo:hover {
+            background: #c82333 !important;
+        }
+
+        #listaSocios {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        #cotoActual {
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        #estadoMonitoreo {
+            margin-top: 10px;
+            font-size: 11px;
+            text-align: center;
+            color: #666;
+        }
+
+        /* Separador visual en el menú */
+        .menu-separator {
+            height: 1px;
+            background: rgba(0,0,0,0.1);
+            margin: 5px 0;
+        }
+
+        /* ========== ESTILOS ADMIN COTO ========== */
+        #adminMap {
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Panel de Control Admin Coto */
+        #controlPanel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            width: 350px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .header-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2A9DF4;
+        }
+
+        .coto-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2A9DF4;
+            margin-bottom: 5px;
+        }
+
+        .admin-name {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2A9DF4;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        #sociosList {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+
+        .socio-item {
+            padding: 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: white;
+        }
+
+        .socio-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .socio-coords {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .socio-status {
+            font-size: 0.8em;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .status-dentro {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-fuera {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .controls {
+            margin-top: 15px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        #statusMessage {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Nuevos estilos para el botón de cerrar sesión en Admin */
+        #adminLogoutBtn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 9999;
+        }
     </style>
-  </head>
-
-  <body>
-    <div id="info">Dibuja un polígono para marcar el coto</div>
-    <div id="posicion">Posición actual: ---, ---</div>
-    <div id="map"></div>
-
-    <!-- Panel de registro de socios -->
-    <div id="registroPanel">
-      <h3>Registrar Nuevo Socio</h3>
-      <input type="text" id="regNombre" placeholder="Nombre completo" maxlength="50">
-      <input type="text" id="regUsuario" placeholder="Usuario" maxlength="20">
-      <input type="password" id="regContrasena" placeholder="Contraseña" maxlength="20">
-      <input type="email" id="regEmail" placeholder="Email" maxlength="100">
-      <input type="text" id="regTelefono" placeholder="Teléfono (9 dígitos)" maxlength="9">
-      <button id="btnRegistrarSocio">Registrar Socio</button>
-      <div id="mensajeRegistro" style="margin-top: 10px; font-size: 14px;"></div>
+</head>
+<body>
+    <!-- Pantalla de Login -->
+    <div id="loginScreen">
+        <div class="logo">🌿 Venatus</div>
+        <div class="subtitle">Sistema de Administración</div>
+        
+        <div class="input-group">
+            <label for="adminUsuario">Usuario:</label>
+            <input type="text" id="adminUsuario" placeholder="Ingresa tu usuario">
+        </div>
+        
+        <div class="input-group">
+            <label for="adminPassword">Contraseña:</label>
+            <input type="password" id="adminPassword" placeholder="Ingresa tu contraseña">
+        </div>
+        
+        <button class="btn" onclick="login()">Acceder al Sistema</button>
+        
+        <div id="loginError" class="error-message"></div>
     </div>
 
-    <!-- Panel de monitoreo de socios -->
-    <div id="monitoreoPanel">
-      <h3>👥 Monitorear Socios</h3>
-      
-      <div style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Coto Seleccionado:</label>
-        <div id="cotoActual">Ningún coto seleccionado</div>
-      </div>
-      
-      <button id="btnIniciarMonitoreo">▶️ Iniciar Monitoreo</button>
-      <button id="btnDetenerMonitoreo" style="display: none;">⏹️ Detener Monitoreo</button>
-      
-      <div style="margin-top: 15px;">
-        <h4 style="margin: 0 0 10px 0; font-size: 14px;">Socios en el Coto:</h4>
-        <div id="listaSocios">
-          <div style="text-align: center; color: #666; padding: 20px;">
-            Monitoreo no activo
-          </div>
+    <!-- Pantalla Super Administrador -->
+    <div id="superAdminScreen">
+        <!-- Botón de cerrar sesión eliminado de aquí (ahora está en el menú) -->
+        
+        <div id="info">Dibuja un polígono para marcar el coto</div>
+        <div id="posicion">Posición actual: ---, ---</div>
+        <div id="map"></div>
+
+        <!-- Panel de registro de socios -->
+        <div id="registroPanel">
+            <h3>Registrar Nuevo Socio</h3>
+            <input type="text" id="regNombre" placeholder="Nombre completo" maxlength="50">
+            <input type="text" id="regUsuario" placeholder="Usuario" maxlength="20">
+            <input type="password" id="regContrasena" placeholder="Contraseña" maxlength="20">
+            <input type="email" id="regEmail" placeholder="Email" maxlength="100">
+            <input type="text" id="regTelefono" placeholder="Teléfono (9 dígitos)" maxlength="9">
+            <button id="btnRegistrarSocio">Registrar Socio</button>
+            <div id="mensajeRegistro" style="margin-top: 10px; font-size: 14px;"></div>
         </div>
-      </div>
-      
-      <div id="estadoMonitoreo"></div>
+
+        <!-- Panel de monitoreo de socios -->
+        <div id="monitoreoPanel">
+            <h3>👥 Monitorear Socios</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Coto Seleccionado:</label>
+                <div id="cotoActual">Ningún coto seleccionado</div>
+            </div>
+            
+            <button id="btnIniciarMonitoreo">▶️ Iniciar Monitoreo</button>
+            <button id="btnDetenerMonitoreo" style="display: none;">⏹️ Detener Monitoreo</button>
+            
+            <div style="margin-top: 15px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px;">Socios en el Coto:</h4>
+                <div id="listaSocios">
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        Monitoreo no activo
+                    </div>
+                </div>
+            </div>
+            
+            <div id="estadoMonitoreo"></div>
+        </div>
+
+        <!-- Panel de Gestión de Administradores -->
+        <div id="adminPanel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #2A9DF4;">👑 Gestión de Administradores</h3>
+                <button onclick="cerrarPanelAdmin()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">×</button>
+            </div>
+
+            <!-- Formulario para crear nuevo administrador -->
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin-top: 0; color: #333;">➕ Crear Nuevo Administrador</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Nombre Completo</label>
+                        <input type="text" id="adminNombre" placeholder="Ej: Juan Pérez" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Usuario</label>
+                        <input type="text" id="adminUsuarioPanel" placeholder="Ej: juan.admin" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Contraseña</label>
+                        <input type="password" id="adminClave" placeholder="Mínimo 6 caracteres" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Email</label>
+                        <input type="email" id="adminEmail" placeholder="Ej: juan@email.com" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Tipo de Administrador</label>
+                    <select id="adminTipo" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="admin">Administrador de Coto</option>
+                        <option value="superadmin">Super Administrador</option>
+                    </select>
+                </div>
+
+                <div id="cotoSelection" style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Coto Asignado</label>
+                    <select id="adminCoto" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">-- Selecciona un coto --</option>
+                    </select>
+                </div>
+
+                <button onclick="crearAdministrador()" style="width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    ✅ Crear Administrador
+                </button>
+                
+                <div id="mensajeAdmin" style="margin-top: 10px; font-size: 12px; text-align: center;"></div>
+            </div>
+
+            <!-- Lista de administradores existentes -->
+            <div>
+                <h4 style="margin-bottom: 10px; color: #333;">📋 Administradores Existentes</h4>
+                <div id="listaAdmins" style="max-height: 300px; overflow-y: auto; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px;">
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        Cargando administradores...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="menu">
+            <button id="menuToggle">&#9776;</button>
+            <div id="menuItems">
+                <button id="drawPolygon">Dibujar coto</button>
+                <button id="deletePolygon">Borrar coto</button>
+                <select id="selectArea">
+                    <option value="">-- Selecciona un coto --</option>
+                </select>
+                <button id="saveToDB">Guardar coto</button>
+                
+                <!-- Separador y nuevas opciones -->
+                <div class="menu-separator"></div>
+                <button id="registrarSocio">👤 Registrar Socio</button>
+                <button id="monitorearSocios">👥 Monitorear Socios</button>
+                
+                <!-- NUEVA OPCIÓN PARA GESTIONAR ADMINISTRADORES -->
+                <div class="menu-separator"></div>
+                <button id="gestionarAdmins">👑 Gestionar Administradores</button>
+                
+                <!-- BOTÓN DE CERRAR SESIÓN DENTRO DEL MENÚ (SOLO PARA SUPER ADMIN) -->
+                <div class="menu-separator"></div>
+                <button id="logoutSuperAdmin" class="logout-btn" style="width: 100%; text-align: left; margin: 0;">🚪 Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <!-- Controles de zoom -->
+        <div id="zoomControls">
+            <button id="zoomIn">+</button>
+            <button id="zoomOut">-</button>
+        </div>
+
+        <!-- Overlay para fondo oscuro -->
+        <div id="adminOverlay"></div>
     </div>
 
-    <!-- Panel de Gestión de Administradores -->
-    <div id="adminPanel">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="margin: 0; color: #2A9DF4;">👑 Gestión de Administradores</h3>
-        <button onclick="cerrarPanelAdmin()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">×</button>
-      </div>
-
-      <!-- Formulario para crear nuevo administrador -->
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h4 style="margin-top: 0; color: #333;">➕ Crear Nuevo Administrador</h4>
+    <!-- Pantalla Administrador de Coto -->
+    <div id="adminScreen">
+        <!-- Botón de cerrar sesión en la esquina superior izquierda -->
+        <button id="adminLogoutBtn" class="logout-btn" onclick="logout()">🚪 Cerrar Sesión</button>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Nombre Completo</label>
-            <input type="text" id="adminNombre" placeholder="Ej: Juan Pérez" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-          </div>
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Usuario</label>
-            <input type="text" id="adminUsuario" placeholder="Ej: juan.admin" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-          </div>
-        </div>
+        <div id="adminMap"></div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Contraseña</label>
-            <input type="password" id="adminClave" placeholder="Mínimo 6 caracteres" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-          </div>
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Email</label>
-            <input type="email" id="adminEmail" placeholder="Ej: juan@email.com" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-          </div>
+        <div id="zoomControls">
+        <button id="zoomIn">+</button>
+        <button id="zoomOut">-</button>
         </div>
-
-        <div style="margin-bottom: 10px;">
-          <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Coto Asignado</label>
-          <select id="adminCoto" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-            <option value="">-- Selecciona un coto --</option>
-          </select>
-        </div>
-
-        <button onclick="crearAdministrador()" style="width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-          ✅ Crear Administrador
-        </button>
         
-        <div id="mensajeAdmin" style="margin-top: 10px; font-size: 12px; text-align: center;"></div>
-      </div>
-
-      <!-- Lista de administradores existentes -->
-      <div>
-        <h4 style="margin-bottom: 10px; color: #333;">📋 Administradores Existentes</h4>
-        <div id="listaAdmins" style="max-height: 300px; overflow-y: auto; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px;">
-          <div style="text-align: center; color: #666; padding: 20px;">
-            Cargando administradores...
-          </div>
+        <div id="controlPanel">
+            <div class="header-info">
+                <div class="coto-name" id="currentCotoName">Coto Actual</div>
+                <div class="admin-name" id="currentAdminName">Administrador</div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalSocios">0</div>
+                    <div class="stat-label">Total Socios</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="sociosEnCoto">0</div>
+                    <div class="stat-label">En el Coto</div>
+                </div>
+            </div>
+            
+            <h4>👥 Socios Monitoreados</h4>
+            <div id="sociosList">
+                <div style="text-align: center; color: #666; padding: 20px;">
+                    Cargando socios...
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" id="btnIniciarMonitoreoAdmin">▶️ Iniciar Monitoreo</button>
+                <button class="btn btn-danger" id="btnDetenerMonitoreoAdmin" style="display: none;">⏹️ Detener Monitoreo</button>
+            </div>
+            
+            <div id="statusMessage" class="status-offline">
+                Monitoreo inactivo
+            </div>
         </div>
-      </div>
-    </div>
-
-    <div id="menu">
-      <button id="menuToggle">&#9776;</button>
-      <div id="menuItems">
-        <button id="drawPolygon">Dibujar coto</button>
-        <button id="deletePolygon">Borrar coto</button>
-        <select id="selectArea">
-          <option value="">-- Selecciona un coto --</option>
-        </select>
-        <button id="saveToDB">Guardar coto</button>
-        
-        <!-- Separador y nuevas opciones -->
-        <div class="menu-separator"></div>
-        <button id="registrarSocio">👤 Registrar Socio</button>
-        <button id="monitorearSocios">👥 Monitorear Socios</button>
-        
-        <!-- NUEVA OPCIÓN PARA GESTIONAR ADMINISTRADORES -->
-        <div class="menu-separator"></div>
-        <button id="gestionarAdmins">👑 Gestionar Administradores</button>
-      </div>
-    </div>
-
-    <!-- Controles de zoom -->
-    <div id="zoomControls">
-      <button id="zoomIn">+</button>
-      <button id="zoomOut">-</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
     <script>
-      let map = L.map("map").setView([37.8916, -4.7794], 13);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 22,
-        detectRetina: true,
-        attribution: "© OpenStreetMap contributors"
-      }).addTo(map);
+        // Variables globales
+        let currentUser = null;
+        let userType = null; // 'superadmin' o 'admin'
 
-      let drawnItems = new L.FeatureGroup();
-      map.addLayer(drawnItems);
+        // ========== FUNCIONALIDAD DE LOGIN ==========
 
-      let drawControl = new L.Control.Draw({
-        draw: { polygon: true, polyline: false, rectangle: false, circle: false, marker: false, circlemarker: false },
-        edit: { featureGroup: drawnItems, remove: true }
-      });
+        async function login() {
+            const usuario = document.getElementById('adminUsuario').value.trim();
+            const password = document.getElementById('adminPassword').value.trim();
+            const errorDiv = document.getElementById('loginError');
 
-      let lastCoords = [];
-      let userMarker = null;
-      let polygonActual = null;
-      let centrado = false;
+            if (!usuario || !password) {
+                errorDiv.textContent = 'Usuario y contraseña son obligatorios';
+                errorDiv.style.display = 'block';
+                return;
+            }
 
-      // Variables para monitoreo
-      let intervaloMonitoreo = null;
-      let marcadoresSocios = {};
-      let cotoSeleccionadoId = null;
+            try {
+                const response = await fetch('http://localhost:3000/admin/login-unificado', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, password })
+                });
 
-      // Variables para administradores
-      let listaAdministradores = [];
+                const data = await response.json();
 
-      function puntoDentroPoligono(lat, lng, polyLatLngs) {
-        let x = lng, y = lat, inside = false;
-        for (let i = 0, j = polyLatLngs.length - 1; i < polyLatLngs.length; j = i++) {
-          let xi = polyLatLngs[i].lng, yi = polyLatLngs[i].lat;
-          let xj = polyLatLngs[j].lng, yj = polyLatLngs[j].lat;
-          let intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-          if (intersect) inside = !inside;
-        }
-        return inside;
-      }
-
-      function actualizarPosicion(lat, lng) {
-        const posicionDiv = document.getElementById("posicion");
-        if (!polygonActual) return;
-
-        if (puntoDentroPoligono(lat, lng, polygonActual.getLatLngs()[0])) {
-          if (userMarker) userMarker.setLatLng([lat, lng]);
-          else userMarker = L.marker([lat, lng], { title: "Tu ubicación actual" }).addTo(map);
-          posicionDiv.style.display = "block";
-          posicionDiv.textContent = `Posición actual: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-          if (!centrado) {
-            map.setView([lat, lng], 17);
-            centrado = true;
-          }
-        } else {
-          if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
-          posicionDiv.style.display = "none";
-        }
-      }
-
-      function iniciarUbicacion() {
-        if (navigator.geolocation) {
-          navigator.geolocation.watchPosition(
-            pos => {
-              const { latitude, longitude } = pos.coords;
-              actualizarPosicion(latitude, longitude);
-            },
-            err => console.error("Error obteniendo la ubicación:", err),
-            { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-          );
-        } else {
-          alert("La geolocalización no está soportada en este dispositivo.");
-        }
-      }
-
-      window.addEventListener("load", () => {
-        iniciarUbicacion();
-        cargarAreas();
-      });
-
-      map.on(L.Draw.Event.CREATED, e => {
-        let layer = e.layer;
-        drawnItems.clearLayers();
-        drawnItems.addLayer(layer);
-        polygonActual = layer;
-        calcularArea(layer);
-        guardarCoordenadas(layer);
-      });
-
-      map.on('draw:edited', e => {
-        e.layers.eachLayer(layer => {
-          polygonActual = layer;
-          guardarCoordenadas(layer);
-          calcularArea(layer);
-        });
-      });
-
-      map.on(L.Draw.Event.DELETED, () => {
-        polygonActual = null;
-        if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
-        const posicionDiv = document.getElementById("posicion");
-        posicionDiv.style.display = "none";
-        posicionDiv.textContent = "Posición actual: ---, ---";
-      });
-
-      function calcularArea(layer) {
-        let latlngs = layer.getLatLngs()[0];
-        let area = L.GeometryUtil ? L.GeometryUtil.geodesicArea(latlngs) : 0;
-        let areaKm2 = (area / 1_000_000).toFixed(3);
-        document.getElementById("info").textContent = `Coto: ${area.toFixed(2)} m² (${areaKm2} km²)`;
-      }
-
-      function guardarCoordenadas(layer) {
-        lastCoords = layer.getLatLngs()[0].map(p => ({ lat: p.lat, lng: p.lng }));
-      }
-
-      // --- Menú ---
-      const menuToggle = document.getElementById("menuToggle");
-      const menuItems = document.getElementById("menuItems");
-      menuToggle.addEventListener("click", () => {
-        menuItems.style.display = menuItems.style.display === "block" ? "none" : "block";
-      });
-
-      document.getElementById("zoomIn").addEventListener("click", () => map.zoomIn());
-      document.getElementById("zoomOut").addEventListener("click", () => map.zoomOut());
-
-      document.getElementById("drawPolygon").addEventListener("click", () => {
-        const drawPolygon = new L.Draw.Polygon(map, drawControl.options.draw.polygon);
-        drawPolygon.enable();
-      });
-
-      document.getElementById("deletePolygon").addEventListener("click", () => {
-        drawnItems.clearLayers();
-        polygonActual = null;
-        if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
-        document.getElementById("posicion").style.display = "none";
-        document.getElementById("posicion").textContent = "Posición actual: ---, ---";
-      });
-
-      async function guardarEnFirebird() {
-        if (lastCoords.length === 0) {
-          alert("No hay coordenadas para guardar.");
-          return;
+                if (response.ok) {
+                    // Login exitoso
+                    currentUser = data.admin;
+                    userType = data.tipo;
+                    
+                    // Ocultar login
+                    document.getElementById('loginScreen').style.display = 'none';
+                    
+                    // Mostrar la pantalla correspondiente
+                    if (userType === 'superadmin') {
+                        document.getElementById('superAdminScreen').style.display = 'block';
+                        inicializarSuperAdmin();
+                    } else {
+                        document.getElementById('adminScreen').style.display = 'block';
+                        inicializarAdminCoto(data.coto);
+                    }
+                    
+                } else {
+                    errorDiv.textContent = data.error || 'Error en el login';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Error de conexión con el servidor';
+                errorDiv.style.display = 'block';
+            }
         }
 
-        const nombre = prompt("Introduce un nombre para el área:", "Área 1") || "Área sin nombre";
-
-        try {
-          const respuesta = await fetch("http://localhost:3000/guardar", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nombre, coordenadas: lastCoords })
-          });
-
-          const data = await respuesta.json();
-          alert(data.mensaje || "Error al guardar el área.");
-          cargarAreas(); // actualizar lista de áreas
-        } catch (error) {
-          console.error("Error al guardar:", error);
-          alert("Error de conexión al servidor");
-        }
-      }
-
-      document.getElementById("saveToDB").addEventListener("click", guardarEnFirebird);
-
-      async function cargarAreas() {
-        try {
-          console.log("🔄 Cargando áreas...");
-          const res = await fetch("http://localhost:3000/areas");
-          if (!res.ok) {
-            throw new Error(`Error HTTP: ${res.status}`);
-          }
-          const areas = await res.json();
-          console.log("✅ Áreas recibidas:", areas);
-
-          const select = document.getElementById("selectArea");
-          select.innerHTML = '<option value="">-- Selecciona un coto --</option>';
-
-          areas.forEach(area => {
-            const option = document.createElement("option");
-            option.value = area.id;
-            option.textContent = area.nombre;
-            select.appendChild(option);
-          });
-
-          console.log(`📋 ${areas.length} áreas cargadas en el select`);
-        } catch (err) {
-          console.error("❌ Error cargando áreas:", err);
-          alert("Error al cargar las áreas: " + err.message);
-        }
-      }
-
-      document.getElementById("selectArea").addEventListener("change", async function() {
-        const selectedId = this.value;
-        if (!selectedId) {
-          drawnItems.clearLayers();
-          polygonActual = null;
-          cotoSeleccionadoId = null;
-          document.getElementById('cotoActual').textContent = 'Ningún coto seleccionado';
-          detenerMonitoreo();
-          return;
-        }
-
-        try {
-          console.log("🔄 Solicitando área ID:", selectedId);
-          const res = await fetch(`http://localhost:3000/areas/${selectedId}`);
-          
-          if (!res.ok) {
-            const errorText = await res.text();
-            console.error("❌ Error HTTP:", res.status, errorText);
-            alert("Error al cargar el área: " + errorText);
-            return;
-          }
-          
-          const area = await res.json();
-          console.log("📌 Área recibida:", area);
-
-          if (!area.coords || area.coords.length === 0) {
-            console.warn("⚠️ No hay coordenadas en esta área:", area);
-            alert("Esta área no tiene coordenadas definidas");
-            return;
-          }
-
-          console.log("📍 Coordenadas a dibujar:", area.coords);
-          
-          drawnItems.clearLayers();
-          const polygon = L.polygon(area.coords, { 
-            color: "#2A9DF4", 
-            weight: 2,
-            fillOpacity: 0.3 
-          }).addTo(drawnItems);
-          
-          map.fitBounds(polygon.getBounds());
-          polygonActual = polygon;
-          calcularArea(polygon);
-          guardarCoordenadas(polygon);
-          centrado = false;
-          
-          // Configurar monitoreo para este coto
-          cotoSeleccionadoId = selectedId;
-          document.getElementById('cotoActual').textContent = area.nombre;
-          
-          // Mostrar panel de monitoreo y iniciar automáticamente
-          document.getElementById('monitoreoPanel').style.display = 'block';
-          iniciarMonitoreo();
-          
-          console.log("✅ Área cargada correctamente");
-          
-        } catch (err) {
-          console.error("❌ Error cargando área:", err);
-          alert("Error al cargar el área: " + err.message);
-        }
-      });
-
-      // ========== FUNCIONALIDAD DE REGISTRO DE SOCIOS ==========
-      
-      document.getElementById('registrarSocio').addEventListener('click', function() {
-        const panel = document.getElementById('registroPanel');
-        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        menuItems.style.display = 'none';
-      });
-
-      document.getElementById('btnRegistrarSocio').addEventListener('click', async function() {
-        const nombre = document.getElementById('regNombre').value.trim();
-        const usuario = document.getElementById('regUsuario').value.trim();
-        const contrasena = document.getElementById('regContrasena').value.trim();
-        const email = document.getElementById('regEmail').value.trim();
-        const telefono = document.getElementById('regTelefono').value.trim();
-
-        const mensajeDiv = document.getElementById('mensajeRegistro');
-
-        if (!nombre || !usuario || !contrasena || !email || !telefono) {
-          mensajeDiv.innerHTML = '<span style="color: red;">Todos los campos son obligatorios</span>';
-          return;
-        }
-
-        if (telefono.length !== 9 || !/^\d+$/.test(telefono)) {
-          mensajeDiv.innerHTML = '<span style="color: red;">El teléfono debe tener 9 dígitos</span>';
-          return;
-        }
-
-        try {
-          const respuesta = await fetch('http://localhost:3000/registrar-socio', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nombre, usuario, contrasena, email, telefono })
-          });
-
-          const data = await respuesta.json();
-
-          if (respuesta.ok) {
-            mensajeDiv.innerHTML = '<span style="color: green;">✅ ' + data.mensaje + '</span>';
-            document.getElementById('regNombre').value = '';
-            document.getElementById('regUsuario').value = '';
-            document.getElementById('regContrasena').value = '';
-            document.getElementById('regEmail').value = '';
-            document.getElementById('regTelefono').value = '';
+        function logout() {
+            // Limpiar todo
+            currentUser = null;
+            userType = null;
             
-            setTimeout(() => {
-              document.getElementById('registroPanel').style.display = 'none';
-              mensajeDiv.innerHTML = '';
-            }, 3000);
-          } else {
-            mensajeDiv.innerHTML = '<span style="color: red;">❌ ' + data.error + '</span>';
-          }
-        } catch (error) {
-          mensajeDiv.innerHTML = '<span style="color: red;">❌ Error de conexión con el servidor</span>';
-          console.error('Error:', error);
-        }
-      });
-
-      // ========== FUNCIONALIDAD DE MONITOREO DE SOCIOS ==========
-
-      document.getElementById('monitorearSocios').addEventListener('click', function() {
-        const panel = document.getElementById('monitoreoPanel');
-        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        menuItems.style.display = 'none';
-      });
-
-      // Función para actualizar la lista de socios
-      async function actualizarSociosEnCoto() {
-        if (!cotoSeleccionadoId) {
-          console.log("❌ No hay coto seleccionado para monitorear");
-          return;
-        }
-        
-        try {
-          const response = await fetch(`http://localhost:3000/monitoreo/coto/${cotoSeleccionadoId}/socios`);
-          const data = await response.json();
-          
-          if (response.ok) {
-            actualizarListaSocios(data.socios);
-            actualizarMarcadoresEnMapa(data.socios);
-            document.getElementById('estadoMonitoreo').textContent = 
-                `Última actualización: ${new Date().toLocaleTimeString()} - ${data.totalSocios} socios`;
-          } else {
-            document.getElementById('estadoMonitoreo').textContent = `Error: ${data.error}`;
-          }
-        } catch (error) {
-          console.error('Error al obtener socios:', error);
-          document.getElementById('estadoMonitoreo').textContent = 'Error de conexión';
-        }
-      }
-
-      // Actualizar lista en el panel
-      function actualizarListaSocios(socios) {
-        const listaDiv = document.getElementById('listaSocios');
-        
-        if (socios.length === 0) {
-          listaDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 10px;">No hay socios en el coto</div>';
-          return;
-        }
-        
-        listaDiv.innerHTML = socios.map(socio => `
-          <div style="padding: 8px; border-bottom: 1px solid #eee; margin-bottom: 5px;">
-            <strong>${socio.nombre}</strong><br>
-            <small>📍 ${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}</small><br>
-            <small style="color: #28a745;">✅ En el coto</small>
-          </div>
-        `).join('');
-      }
-
-      // Actualizar marcadores en el mapa
-      function actualizarMarcadoresEnMapa(socios) {
-        // Limpiar marcadores anteriores
-        Object.values(marcadoresSocios).forEach(marker => {
-          if (marker) map.removeLayer(marker);
-        });
-        marcadoresSocios = {};
-        
-        // Agregar nuevos marcadores
-        socios.forEach(socio => {
-          const marker = L.marker([socio.lat, socio.lng])
-            .bindPopup(`<b>${socio.nombre}</b><br>📍 En el coto<br>${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}`)
-            .addTo(map);
-          
-          marcadoresSocios[socio.id] = marker;
-        });
-      }
-
-      // Controles de monitoreo
-      function iniciarMonitoreo() {
-        if (intervaloMonitoreo) {
-          clearInterval(intervaloMonitoreo);
-        }
-        
-        intervaloMonitoreo = setInterval(actualizarSociosEnCoto, 5000); // Actualizar cada 5 segundos
-        document.getElementById('btnIniciarMonitoreo').style.display = 'none';
-        document.getElementById('btnDetenerMonitoreo').style.display = 'block';
-        document.getElementById('estadoMonitoreo').textContent = 'Monitoreo activo - Cargando...';
-        
-        // Primera actualización inmediata
-        actualizarSociosEnCoto();
-      }
-
-      function detenerMonitoreo() {
-        if (intervaloMonitoreo) {
-          clearInterval(intervaloMonitoreo);
-          intervaloMonitoreo = null;
-        }
-        
-        document.getElementById('btnIniciarMonitoreo').style.display = 'block';
-        document.getElementById('btnDetenerMonitoreo').style.display = 'none';
-        document.getElementById('estadoMonitoreo').textContent = 'Monitoreo detenido';
-        
-        // Limpiar marcadores
-        Object.values(marcadoresSocios).forEach(marker => {
-          if (marker) map.removeLayer(marker);
-        });
-        marcadoresSocios = {};
-        
-        // Limpiar lista
-        document.getElementById('listaSocios').innerHTML = 
-          '<div style="text-align: center; color: #666; padding: 20px;">Monitoreo no activo</div>';
-      }
-
-      document.getElementById('btnIniciarMonitoreo').addEventListener('click', iniciarMonitoreo);
-      document.getElementById('btnDetenerMonitoreo').addEventListener('click', detenerMonitoreo);
-
-      // ========== GESTIÓN DE ADMINISTRADORES ==========
-
-      // Mostrar panel de administradores
-      document.getElementById('gestionarAdmins').addEventListener('click', function() {
-        mostrarPanelAdmin();
-      });
-
-      function mostrarPanelAdmin() {
-        // Crear overlay si no existe
-        if (!document.getElementById('adminOverlay')) {
-          const overlay = document.createElement('div');
-          overlay.id = 'adminOverlay';
-          document.body.appendChild(overlay);
-        }
-        
-        document.getElementById('adminOverlay').style.display = 'block';
-        document.getElementById('adminPanel').style.display = 'block';
-        menuItems.style.display = 'none';
-        
-        // Cargar lista de cotos para el select
-        cargarCotosParaAdmin();
-        // Cargar administradores existentes
-        cargarAdministradores();
-      }
-
-      function cerrarPanelAdmin() {
-        document.getElementById('adminOverlay').style.display = 'none';
-        document.getElementById('adminPanel').style.display = 'none';
-      }
-
-      // Cargar cotos para el select de administradores
-      async function cargarCotosParaAdmin() {
-        try {
-          const response = await fetch('http://localhost:3000/areas');
-          const areas = await response.json();
-          
-          const select = document.getElementById('adminCoto');
-          select.innerHTML = '<option value="">-- Selecciona un coto --</option>';
-          
-          areas.forEach(area => {
-            const option = document.createElement('option');
-            option.value = area.id;
-            option.textContent = area.nombre;
-            select.appendChild(option);
-          });
-        } catch (error) {
-          console.error('Error cargando cotos para admin:', error);
-        }
-      }
-
-      // Crear nuevo administrador
-      async function crearAdministrador() {
-        const nombre = document.getElementById('adminNombre').value.trim();
-        const usuario = document.getElementById('adminUsuario').value.trim();
-        const clave = document.getElementById('adminClave').value.trim();
-        const email = document.getElementById('adminEmail').value.trim();
-        const idCoto = document.getElementById('adminCoto').value;
-        const mensajeDiv = document.getElementById('mensajeAdmin');
-
-        // Validaciones
-        if (!nombre || !usuario || !clave || !email || !idCoto) {
-          mensajeDiv.innerHTML = '<span style="color: red;">❌ Todos los campos son obligatorios</span>';
-          return;
-        }
-
-        if (clave.length < 6) {
-          mensajeDiv.innerHTML = '<span style="color: red;">❌ La contraseña debe tener al menos 6 caracteres</span>';
-          return;
-        }
-
-        try {
-          const response = await fetch('http://localhost:3000/admin/crear', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              usuario, 
-              clave, 
-              nombre, 
-              email, 
-              idCoto: parseInt(idCoto) 
-            })
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            mensajeDiv.innerHTML = '<span style="color: green;">✅ ' + data.message + '</span>';
+            // Ocultar todas las pantallas
+            document.getElementById('superAdminScreen').style.display = 'none';
+            document.getElementById('adminScreen').style.display = 'none';
             
-            // Limpiar formulario
-            document.getElementById('adminNombre').value = '';
+            // Mostrar login
+            document.getElementById('loginScreen').style.display = 'block';
+            
+            // Limpiar campos
             document.getElementById('adminUsuario').value = '';
-            document.getElementById('adminClave').value = '';
-            document.getElementById('adminEmail').value = '';
-            document.getElementById('adminCoto').value = '';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
             
-            // Recargar lista de administradores
-            cargarAdministradores();
+            // Limpiar mapas si existen
+            if (window.superAdminMap) {
+                window.superAdminMap.remove();
+                window.superAdminMap = null;
+            }
+            if (window.adminMap) {
+                window.adminMap.remove();
+                window.adminMap = null;
+            }
+        }
+
+        // Enter para login
+        document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+
+        // ========== FUNCIONALIDAD SUPER ADMINISTRADOR ==========
+
+        function inicializarSuperAdmin() {
+            // Inicializar mapa
+            window.superAdminMap = L.map("map").setView([37.8916, -4.7794], 13);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 22,
+                detectRetina: true,
+                attribution: "© OpenStreetMap contributors"
+            }).addTo(window.superAdminMap);
+
+            let drawnItems = new L.FeatureGroup();
+            window.superAdminMap.addLayer(drawnItems);
+
+            let drawControl = new L.Control.Draw({
+                draw: { polygon: true, polyline: false, rectangle: false, circle: false, marker: false, circlemarker: false },
+                edit: { featureGroup: drawnItems, remove: true }
+            });
+
+            let lastCoords = [];
+            let userMarker = null;
+            let polygonActual = null;
+            let centrado = false;
+
+            // Variables para monitoreo
+            let intervaloMonitoreo = null;
+            let marcadoresSocios = {};
+            let cotoSeleccionadoId = null;
+
+            // Variables para administradores
+            let listaAdministradores = [];
+
+            // Mostrar/ocultar selección de coto según tipo de admin
+            document.getElementById('adminTipo').addEventListener('change', function() {
+                const cotoSelection = document.getElementById('cotoSelection');
+                if (this.value === 'admin') {
+                    cotoSelection.style.display = 'block';
+                } else {
+                    cotoSelection.style.display = 'none';
+                }
+            });
+
+            function puntoDentroPoligono(lat, lng, polyLatLngs) {
+                let x = lng, y = lat, inside = false;
+                for (let i = 0, j = polyLatLngs.length - 1; i < polyLatLngs.length; j = i++) {
+                    let xi = polyLatLngs[i].lng, yi = polyLatLngs[i].lat;
+                    let xj = polyLatLngs[j].lng, yj = polyLatLngs[j].lat;
+                    let intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+                    if (intersect) inside = !inside;
+                }
+                return inside;
+            }
+
+            function actualizarPosicion(lat, lng) {
+                const posicionDiv = document.getElementById("posicion");
+                if (!polygonActual) return;
+
+                if (puntoDentroPoligono(lat, lng, polygonActual.getLatLngs()[0])) {
+                    if (userMarker) userMarker.setLatLng([lat, lng]);
+                    else userMarker = L.marker([lat, lng], { title: "Tu ubicación actual" }).addTo(window.superAdminMap);
+                    posicionDiv.style.display = "block";
+                    posicionDiv.textContent = `Posición actual: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                    if (!centrado) {
+                        window.superAdminMap.setView([lat, lng], 17);
+                        centrado = true;
+                    }
+                } else {
+                    if (userMarker) { window.superAdminMap.removeLayer(userMarker); userMarker = null; }
+                    posicionDiv.style.display = "none";
+                }
+            }
+
+            function iniciarUbicacion() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.watchPosition(
+                        pos => {
+                            const { latitude, longitude } = pos.coords;
+                            actualizarPosicion(latitude, longitude);
+                        },
+                        err => console.error("Error obteniendo la ubicación:", err),
+                        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+                    );
+                } else {
+                    alert("La geolocalización no está soportada en este dispositivo.");
+                }
+            }
+
+            // Iniciar ubicación cuando se carga la pantalla
+            iniciarUbicacion();
+
+            window.superAdminMap.on(L.Draw.Event.CREATED, e => {
+                let layer = e.layer;
+                drawnItems.clearLayers();
+                drawnItems.addLayer(layer);
+                polygonActual = layer;
+                calcularArea(layer);
+                guardarCoordenadas(layer);
+            });
+
+            window.superAdminMap.on('draw:edited', e => {
+                e.layers.eachLayer(layer => {
+                    polygonActual = layer;
+                    guardarCoordenadas(layer);
+                    calcularArea(layer);
+                });
+            });
+
+            window.superAdminMap.on(L.Draw.Event.DELETED, () => {
+                polygonActual = null;
+                if (userMarker) { window.superAdminMap.removeLayer(userMarker); userMarker = null; }
+                const posicionDiv = document.getElementById("posicion");
+                posicionDiv.style.display = "none";
+                posicionDiv.textContent = "Posición actual: ---, ---";
+            });
+
+            function calcularArea(layer) {
+                let latlngs = layer.getLatLngs()[0];
+                let area = L.GeometryUtil ? L.GeometryUtil.geodesicArea(latlngs) : 0;
+                let areaKm2 = (area / 1_000_000).toFixed(3);
+                document.getElementById("info").textContent = `Coto: ${area.toFixed(2)} m² (${areaKm2} km²)`;
+            }
+
+            function guardarCoordenadas(layer) {
+                lastCoords = layer.getLatLngs()[0].map(p => ({ lat: p.lat, lng: p.lng }));
+            }
+
+            // --- Menú ---
+            const menuToggle = document.getElementById("menuToggle");
+            const menuItems = document.getElementById("menuItems");
+            menuToggle.addEventListener("click", () => {
+                menuItems.style.display = menuItems.style.display === "block" ? "none" : "block";
+            });
+
+            // Event listener para el botón de cerrar sesión dentro del menú
+            document.getElementById("logoutSuperAdmin").addEventListener("click", logout);
+
+            document.getElementById("zoomIn").addEventListener("click", () => window.superAdminMap.zoomIn());
+            document.getElementById("zoomOut").addEventListener("click", () => window.superAdminMap.zoomOut());
+
+            document.getElementById("drawPolygon").addEventListener("click", () => {
+                const drawPolygon = new L.Draw.Polygon(window.superAdminMap, drawControl.options.draw.polygon);
+                drawPolygon.enable();
+            });
+
+            document.getElementById("deletePolygon").addEventListener("click", () => {
+                drawnItems.clearLayers();
+                polygonActual = null;
+                if (userMarker) { window.superAdminMap.removeLayer(userMarker); userMarker = null; }
+                document.getElementById("posicion").style.display = "none";
+                document.getElementById("posicion").textContent = "Posición actual: ---, ---";
+            });
+
+            async function guardarEnFirebird() {
+                if (lastCoords.length === 0) {
+                    alert("No hay coordenadas para guardar.");
+                    return;
+                }
+
+                const nombre = prompt("Introduce un nombre para el área:", "Área 1") || "Área sin nombre";
+
+                try {
+                    const respuesta = await fetch("http://localhost:3000/guardar", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ nombre, coordenadas: lastCoords })
+                    });
+
+                    const data = await respuesta.json();
+                    alert(data.mensaje || "Error al guardar el área.");
+                    cargarAreas(); // actualizar lista de áreas
+                } catch (error) {
+                    console.error("Error al guardar:", error);
+                    alert("Error de conexión al servidor");
+                }
+            }
+
+            document.getElementById("saveToDB").addEventListener("click", guardarEnFirebird);
+
+            async function cargarAreas() {
+                try {
+                    console.log("🔄 Cargando áreas...");
+                    const res = await fetch("http://localhost:3000/areas");
+                    if (!res.ok) {
+                        throw new Error(`Error HTTP: ${res.status}`);
+                    }
+                    const areas = await res.json();
+                    console.log("✅ Áreas recibidas:", areas);
+
+                    const select = document.getElementById("selectArea");
+                    select.innerHTML = '<option value="">-- Selecciona un coto --</option>';
+
+                    areas.forEach(area => {
+                        const option = document.createElement("option");
+                        option.value = area.id;
+                        option.textContent = area.nombre;
+                        select.appendChild(option);
+                    });
+
+                    console.log(`📋 ${areas.length} áreas cargadas en el select`);
+                } catch (err) {
+                    console.error("❌ Error cargando áreas:", err);
+                    alert("Error al cargar las áreas: " + err.message);
+                }
+            }
+
+            // Cargar áreas al iniciar
+            cargarAreas();
+
+            document.getElementById("selectArea").addEventListener("change", async function() {
+                const selectedId = this.value;
+                if (!selectedId) {
+                    drawnItems.clearLayers();
+                    polygonActual = null;
+                    cotoSeleccionadoId = null;
+                    document.getElementById('cotoActual').textContent = 'Ningún coto seleccionado';
+                    detenerMonitoreo();
+                    return;
+                }
+
+                try {
+                    console.log("🔄 Solicitando área ID:", selectedId);
+                    const res = await fetch(`http://localhost:3000/areas/${selectedId}`);
+                    
+                    if (!res.ok) {
+                        const errorText = await res.text();
+                        console.error("❌ Error HTTP:", res.status, errorText);
+                        alert("Error al cargar el área: " + errorText);
+                        return;
+                    }
+                    
+                    const area = await res.json();
+                    console.log("📌 Área recibida:", area);
+
+                    if (!area.coords || area.coords.length === 0) {
+                        console.warn("⚠️ No hay coordenadas en esta área:", area);
+                        alert("Esta área no tiene coordenadas definidas");
+                        return;
+                    }
+
+                    console.log("📍 Coordenadas a dibujar:", area.coords);
+                    
+                    drawnItems.clearLayers();
+                    const polygon = L.polygon(area.coords, { 
+                        color: "#2A9DF4", 
+                        weight: 2,
+                        fillOpacity: 0.3 
+                    }).addTo(drawnItems);
+                    
+                    window.superAdminMap.fitBounds(polygon.getBounds());
+                    polygonActual = polygon;
+                    calcularArea(polygon);
+                    guardarCoordenadas(polygon);
+                    centrado = false;
+                    
+                    // Configurar monitoreo para este coto
+                    cotoSeleccionadoId = selectedId;
+                    document.getElementById('cotoActual').textContent = area.nombre;
+                    
+                    // Mostrar panel de monitoreo y iniciar automáticamente
+                    document.getElementById('monitoreoPanel').style.display = 'block';
+                    iniciarMonitoreo();
+                    
+                    console.log("✅ Área cargada correctamente");
+                    
+                } catch (err) {
+                    console.error("❌ Error cargando área:", err);
+                    alert("Error al cargar el área: " + err.message);
+                }
+            });
+
+            // ========== FUNCIONALIDAD DE REGISTRO DE SOCIOS ==========
             
-            // Ocultar mensaje después de 3 segundos
-            setTimeout(() => {
-              mensajeDiv.innerHTML = '';
-            }, 3000);
-          } else {
-            mensajeDiv.innerHTML = '<span style="color: red;">❌ ' + data.error + '</span>';
-          }
-        } catch (error) {
-          mensajeDiv.innerHTML = '<span style="color: red;">❌ Error de conexión con el servidor</span>';
-          console.error('Error:', error);
+            document.getElementById('registrarSocio').addEventListener('click', function() {
+                const panel = document.getElementById('registroPanel');
+                panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+                menuItems.style.display = 'none';
+            });
+
+            document.getElementById('btnRegistrarSocio').addEventListener('click', async function() {
+                const nombre = document.getElementById('regNombre').value.trim();
+                const usuario = document.getElementById('regUsuario').value.trim();
+                const contrasena = document.getElementById('regContrasena').value.trim();
+                const email = document.getElementById('regEmail').value.trim();
+                const telefono = document.getElementById('regTelefono').value.trim();
+
+                const mensajeDiv = document.getElementById('mensajeRegistro');
+
+                if (!nombre || !usuario || !contrasena || !email || !telefono) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">Todos los campos son obligatorios</span>';
+                    return;
+                }
+
+                if (telefono.length !== 9 || !/^\d+$/.test(telefono)) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">El teléfono debe tener 9 dígitos</span>';
+                    return;
+                }
+
+                try {
+                    const respuesta = await fetch('http://localhost:3000/registrar-socio', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nombre, usuario, contrasena, email, telefono })
+                    });
+
+                    const data = await respuesta.json();
+
+                    if (respuesta.ok) {
+                        mensajeDiv.innerHTML = '<span style="color: green;">✅ ' + data.mensaje + '</span>';
+                        document.getElementById('regNombre').value = '';
+                        document.getElementById('regUsuario').value = '';
+                        document.getElementById('regContrasena').value = '';
+                        document.getElementById('regEmail').value = '';
+                        document.getElementById('regTelefono').value = '';
+                        
+                        setTimeout(() => {
+                            document.getElementById('registroPanel').style.display = 'none';
+                            mensajeDiv.innerHTML = '';
+                        }, 3000);
+                    } else {
+                        mensajeDiv.innerHTML = '<span style="color: red;">❌ ' + data.error + '</span>';
+                    }
+                } catch (error) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ Error de conexión con el servidor</span>';
+                    console.error('Error:', error);
+                }
+            });
+
+            // ========== FUNCIONALIDAD DE MONITOREO DE SOCIOS ==========
+
+            document.getElementById('monitorearSocios').addEventListener('click', function() {
+                const panel = document.getElementById('monitoreoPanel');
+                panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+                menuItems.style.display = 'none';
+            });
+
+            // Función para actualizar la lista de socios
+            async function actualizarSociosEnCoto() {
+                if (!cotoSeleccionadoId) {
+                    console.log("❌ No hay coto seleccionado para monitorear");
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`http://localhost:3000/monitoreo/coto/${cotoSeleccionadoId}/socios`);
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        actualizarListaSocios(data.socios);
+                        actualizarMarcadoresEnMapa(data.socios);
+                        document.getElementById('estadoMonitoreo').textContent = 
+                            `Última actualización: ${new Date().toLocaleTimeString()} - ${data.totalSocios} socios`;
+                    } else {
+                        document.getElementById('estadoMonitoreo').textContent = `Error: ${data.error}`;
+                    }
+                } catch (error) {
+                    console.error('Error al obtener socios:', error);
+                    document.getElementById('estadoMonitoreo').textContent = 'Error de conexión';
+                }
+            }
+
+            // Actualizar lista en el panel
+            function actualizarListaSocios(socios) {
+                const listaDiv = document.getElementById('listaSocios');
+                
+                if (socios.length === 0) {
+                    listaDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 10px;">No hay socios en el coto</div>';
+                    return;
+                }
+                
+                listaDiv.innerHTML = socios.map(socio => `
+                    <div style="padding: 8px; border-bottom: 1px solid #eee; margin-bottom: 5px;">
+                        <strong>${socio.nombre}</strong><br>
+                        <small>📍 ${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}</small><br>
+                        <small style="color: #28a745;">✅ En el coto</small>
+                    </div>
+                `).join('');
+            }
+
+            // Actualizar marcadores en el mapa
+            function actualizarMarcadoresEnMapa(socios) {
+                // Limpiar marcadores anteriores
+                Object.values(marcadoresSocios).forEach(marker => {
+                    if (marker) window.superAdminMap.removeLayer(marker);
+                });
+                marcadoresSocios = {};
+                
+                // Agregar nuevos marcadores
+                socios.forEach(socio => {
+                    const marker = L.marker([socio.lat, socio.lng])
+                        .bindPopup(`<b>${socio.nombre}</b><br>📍 En el coto<br>${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}`)
+                        .addTo(window.superAdminMap);
+                    
+                    marcadoresSocios[socio.id] = marker;
+                });
+            }
+
+            // Controles de monitoreo
+            function iniciarMonitoreo() {
+                if (intervaloMonitoreo) {
+                    clearInterval(intervaloMonitoreo);
+                }
+                
+                intervaloMonitoreo = setInterval(actualizarSociosEnCoto, 5000); // Actualizar cada 5 segundos
+                document.getElementById('btnIniciarMonitoreo').style.display = 'none';
+                document.getElementById('btnDetenerMonitoreo').style.display = 'block';
+                document.getElementById('estadoMonitoreo').textContent = 'Monitoreo activo - Cargando...';
+                
+                // Primera actualización inmediata
+                actualizarSociosEnCoto();
+            }
+
+            function detenerMonitoreo() {
+                if (intervaloMonitoreo) {
+                    clearInterval(intervaloMonitoreo);
+                    intervaloMonitoreo = null;
+                }
+                
+                document.getElementById('btnIniciarMonitoreo').style.display = 'block';
+                document.getElementById('btnDetenerMonitoreo').style.display = 'none';
+                document.getElementById('estadoMonitoreo').textContent = 'Monitoreo detenido';
+                
+                // Limpiar marcadores
+                Object.values(marcadoresSocios).forEach(marker => {
+                    if (marker) window.superAdminMap.removeLayer(marker);
+                });
+                marcadoresSocios = {};
+                
+                // Limpiar lista
+                document.getElementById('listaSocios').innerHTML = 
+                    '<div style="text-align: center; color: #666; padding: 20px;">Monitoreo no activo</div>';
+            }
+
+            document.getElementById('btnIniciarMonitoreo').addEventListener('click', iniciarMonitoreo);
+            document.getElementById('btnDetenerMonitoreo').addEventListener('click', detenerMonitoreo);
+
+            // ========== GESTIÓN DE ADMINISTRADORES ==========
+
+            // Mostrar panel de administradores
+            document.getElementById('gestionarAdmins').addEventListener('click', function() {
+                mostrarPanelAdmin();
+            });
+
+            function mostrarPanelAdmin() {
+                // Crear overlay si no existe
+                if (!document.getElementById('adminOverlay')) {
+                    const overlay = document.createElement('div');
+                    overlay.id = 'adminOverlay';
+                    document.getElementById('superAdminScreen').appendChild(overlay);
+                }
+                
+                document.getElementById('adminOverlay').style.display = 'block';
+                document.getElementById('adminPanel').style.display = 'block';
+                menuItems.style.display = 'none';
+                
+                // Cargar lista de cotos para el select
+                cargarCotosParaAdmin();
+                // Cargar administradores existentes
+                cargarAdministradores();
+            }
+
+            function cerrarPanelAdmin() {
+                document.getElementById('adminOverlay').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'none';
+            }
+
+            // Cargar cotos para el select de administradores
+            async function cargarCotosParaAdmin() {
+                try {
+                    const response = await fetch('http://localhost:3000/areas');
+                    const areas = await response.json();
+                    
+                    const select = document.getElementById('adminCoto');
+                    select.innerHTML = '<option value="">-- Selecciona un coto --</option>';
+                    
+                    areas.forEach(area => {
+                        const option = document.createElement('option');
+                        option.value = area.id;
+                        option.textContent = area.nombre;
+                        select.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error cargando cotos para admin:', error);
+                }
+            }
+
+            // Crear nuevo administrador
+            async function crearAdministrador() {
+                const nombre = document.getElementById('adminNombre').value.trim();
+                const usuario = document.getElementById('adminUsuarioPanel').value.trim();
+                const clave = document.getElementById('adminClave').value.trim();
+                const email = document.getElementById('adminEmail').value.trim();
+                const tipo = document.getElementById('adminTipo').value;
+                const idCoto = document.getElementById('adminCoto').value;
+                const mensajeDiv = document.getElementById('mensajeAdmin');
+
+                // Validaciones básicas
+                if (!nombre || !usuario || !clave || !email || !tipo) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ Todos los campos son obligatorios</span>';
+                    return;
+                }
+
+                if (tipo === 'admin' && !idCoto) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ Debes seleccionar un coto para administradores de coto</span>';
+                    return;
+                }
+
+                if (clave.length < 6) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ La contraseña debe tener al menos 6 caracteres</span>';
+                    return;
+                }
+
+                try {
+                    const response = await fetch('http://localhost:3000/admin/crear', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            usuario, 
+                            clave, 
+                            nombre, 
+                            email, 
+                            tipo: tipo,
+                            idCoto: tipo === 'admin' ? parseInt(idCoto) : null
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        mensajeDiv.innerHTML = '<span style="color: green;">✅ ' + data.message + '</span>';
+                        
+                        // Limpiar formulario
+                        document.getElementById('adminNombre').value = '';
+                        document.getElementById('adminUsuarioPanel').value = '';
+                        document.getElementById('adminClave').value = '';
+                        document.getElementById('adminEmail').value = '';
+                        document.getElementById('adminTipo').value = 'admin';
+                        document.getElementById('adminCoto').value = '';
+                        
+                        // Recargar lista de administradores
+                        cargarAdministradores();
+                        
+                        // Ocultar mensaje después de 3 segundos
+                        setTimeout(() => {
+                            mensajeDiv.innerHTML = '';
+                        }, 3000);
+                    } else {
+                        mensajeDiv.innerHTML = '<span style="color: red;">❌ ' + data.error + '</span>';
+                    }
+                } catch (error) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ Error de conexión con el servidor</span>';
+                    console.error('Error:', error);
+                }
+            }
+
+            // Cargar lista de administradores
+            async function cargarAdministradores() {
+                try {
+                    const response = await fetch('http://localhost:3000/admin/listar');
+                    const administradores = await response.json();
+                    
+                    listaAdministradores = administradores;
+                    actualizarListaAdministradores(administradores);
+                } catch (error) {
+                    console.error('Error cargando administradores:', error);
+                    document.getElementById('listaAdmins').innerHTML = 
+                        '<div style="text-align: center; color: red; padding: 20px;">Error cargando administradores</div>';
+                }
+            }
+
+            // Actualizar la lista en el panel
+            function actualizarListaAdministradores(admins) {
+                const listaDiv = document.getElementById('listaAdmins');
+                
+                if (admins.length === 0) {
+                    listaDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No hay administradores registrados</div>';
+                    return;
+                }
+                
+                listaDiv.innerHTML = admins.map(admin => `
+                    <div class="admin-item">
+                        <div class="admin-info">
+                            <h4>${admin.NOMBRE}</h4>
+                            <p><strong>Usuario:</strong> ${admin.USUARIO} | <strong>Email:</strong> ${admin.EMAIL || 'No especificado'}</p>
+                            <p><strong>Tipo:</strong> ${admin.TIPO === 'superadmin' ? 'Super Administrador' : 'Administrador de Coto'} | 
+                               <strong>Coto:</strong> ${admin.COTO_NOMBRE || 'Todos los cotos'} | 
+                               <strong>Estado:</strong> 
+                                <span class="${admin.ACTIVO ? 'status-activo' : 'status-inactivo'}">
+                                    ${admin.ACTIVO ? 'ACTIVO' : 'INACTIVO'}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="admin-actions">
+                            ${admin.ACTIVO ? 
+                                `<button class="btn-desactivar" onclick="cambiarEstadoAdmin(${admin.ID}, 0)">Desactivar</button>` :
+                                `<button class="btn-activar" onclick="cambiarEstadoAdmin(${admin.ID}, 1)">Activar</button>`
+                            }
+                            <button class="btn-editar" onclick="editarAdministrador(${admin.ID})">Editar</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Cambiar estado de administrador (activar/desactivar)
+            window.cambiarEstadoAdmin = async function(idAdmin, nuevoEstado) {
+                try {
+                    const response = await fetch('http://localhost:3000/admin/estado', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            id: idAdmin,
+                            activo: nuevoEstado
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        // Recargar lista
+                        cargarAdministradores();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    alert('Error de conexión');
+                    console.error('Error:', error);
+                }
+            }
+
+            // Función para editar administrador (placeholder)
+            window.editarAdministrador = function(idAdmin) {
+                const admin = listaAdministradores.find(a => a.ID === idAdmin);
+                if (admin) {
+                    // Aquí puedes implementar la edición
+                    alert(`Editar administrador: ${admin.NOMBRE}\n\nEsta funcionalidad está en desarrollo.`);
+                }
+            }
+
+            // Cerrar panel al hacer clic en el overlay
+            document.addEventListener('click', function(event) {
+                const adminPanel = document.getElementById('adminPanel');
+                const adminOverlay = document.getElementById('adminOverlay');
+                
+                if (adminOverlay && adminOverlay.style.display === 'block' && 
+                    event.target === adminOverlay) {
+                    cerrarPanelAdmin();
+                }
+            });
+
+            // Cerrar paneles al hacer clic fuera de ellos
+            document.addEventListener('click', function(event) {
+                const registroPanel = document.getElementById('registroPanel');
+                const monitoreoPanel = document.getElementById('monitoreoPanel');
+                const adminPanel = document.getElementById('adminPanel');
+                const menuBtn = document.getElementById('menuToggle');
+                const registrarBtn = document.getElementById('registrarSocio');
+                const monitorearBtn = document.getElementById('monitorearSocios');
+                const gestionarBtn = document.getElementById('gestionarAdmins');
+                
+                // Cerrar registro panel si se hace clic fuera
+                if (registroPanel.style.display === 'block' && 
+                    !registroPanel.contains(event.target) && 
+                    !menuBtn.contains(event.target) &&
+                    !registrarBtn.contains(event.target)) {
+                    registroPanel.style.display = 'none';
+                }
+                
+                // Cerrar monitoreo panel si se hace clic fuera
+                if (monitoreoPanel.style.display === 'block' && 
+                    !monitoreoPanel.contains(event.target) && 
+                    !menuBtn.contains(event.target) &&
+                    !monitorearBtn.contains(event.target)) {
+                    monitoreoPanel.style.display = 'none';
+                }
+            });
+
+            window.superAdminMap.zoomControl.remove();
         }
-      }
 
-      // Cargar lista de administradores
-      async function cargarAdministradores() {
-        try {
-          const response = await fetch('http://localhost:3000/admin/listar');
-          const administradores = await response.json();
-          
-          listaAdministradores = administradores;
-          actualizarListaAdministradores(administradores);
-        } catch (error) {
-          console.error('Error cargando administradores:', error);
-          document.getElementById('listaAdmins').innerHTML = 
-            '<div style="text-align: center; color: red; padding: 20px;">Error cargando administradores</div>';
+        // ========== FUNCIONALIDAD ADMINISTRADOR DE COTO ==========
+
+        function inicializarAdminCoto(cotoInfo) {
+            // Variables para admin de coto
+            let currentCotoId = cotoInfo.id;
+            let currentCotoCoords = cotoInfo.coordenadas;
+            let intervaloMonitoreo = null;
+            let marcadoresSocios = {};
+            let cotoPolygon = null;
+
+            // Inicializar mapa
+            window.adminMap = L.map('adminMap', {zoomControl: false}).setView([37.8916, -4.7794], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(window.adminMap);
+
+            // Dibujar polígono del coto
+            if (currentCotoCoords && currentCotoCoords.length > 0) {
+                cotoPolygon = L.polygon(currentCotoCoords, {
+                    color: '#2A9DF4',
+                    fillColor: '#2A9DF4',
+                    fillOpacity: 0.3,
+                    weight: 3
+                }).addTo(window.adminMap);
+                
+                window.adminMap.fitBounds(cotoPolygon.getBounds());
+            }
+
+            // Actualizar UI
+            document.getElementById('currentCotoName').textContent = cotoInfo.nombre;
+            document.getElementById('currentAdminName').textContent = `Admin: ${currentUser.nombre}`;
+
+            // Funciones de monitoreo
+            async function actualizarSociosEnCoto() {
+                if (!currentCotoId) return;
+
+                try {
+                    const response = await fetch(`http://localhost:3000/monitoreo/coto/${currentCotoId}/socios`);
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        actualizarListaSocios(data.socios);
+                        actualizarMarcadoresEnMapa(data.socios);
+                        actualizarEstadisticas(data.totalSocios);
+                        
+                        document.getElementById('statusMessage').textContent = 
+                            `Última actualización: ${new Date().toLocaleTimeString()}`;
+                        document.getElementById('statusMessage').className = 'status-online';
+                    }
+                } catch (error) {
+                    console.error('Error actualizando socios:', error);
+                    document.getElementById('statusMessage').textContent = 'Error de conexión';
+                    document.getElementById('statusMessage').className = 'status-offline';
+                }
+            }
+
+            function actualizarListaSocios(socios) {
+                const listaDiv = document.getElementById('sociosList');
+                
+                if (socios.length === 0) {
+                    listaDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No hay socios en el coto</div>';
+                    return;
+                }
+                
+                listaDiv.innerHTML = socios.map(socio => `
+                    <div class="socio-item">
+                        <div class="socio-name">${socio.nombre}</div>
+                        <div class="socio-coords">📍 ${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}</div>
+                        <div class="socio-status status-dentro">✅ En el coto</div>
+                    </div>
+                `).join('');
+            }
+
+            function actualizarMarcadoresEnMapa(socios) {
+                // Limpiar marcadores anteriores
+                Object.values(marcadoresSocios).forEach(marker => {
+                    if (marker) window.adminMap.removeLayer(marker);
+                });
+                marcadoresSocios = {};
+                
+                // Agregar nuevos marcadores
+                socios.forEach(socio => {
+                    const marker = L.marker([socio.lat, socio.lng])
+                        .bindPopup(`<b>${socio.nombre}</b><br>📍 En el coto<br>${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}`)
+                        .addTo(window.adminMap);
+                    
+                    marcadoresSocios[socio.id] = marker;
+                });
+            }
+
+            function actualizarEstadisticas(totalSocios) {
+                document.getElementById('totalSocios').textContent = totalSocios;
+                document.getElementById('sociosEnCoto').textContent = totalSocios;
+            }
+
+            function iniciarMonitoreo() {
+                if (intervaloMonitoreo) {
+                    clearInterval(intervaloMonitoreo);
+                }
+                
+                intervaloMonitoreo = setInterval(actualizarSociosEnCoto, 5000);
+                document.getElementById('btnIniciarMonitoreoAdmin').style.display = 'none';
+                document.getElementById('btnDetenerMonitoreoAdmin').style.display = 'block';
+                document.getElementById('statusMessage').textContent = 'Monitoreo activo - Cargando...';
+                document.getElementById('statusMessage').className = 'status-online';
+                
+                // Primera actualización inmediata
+                actualizarSociosEnCoto();
+            }
+
+            function detenerMonitoreo() {
+                if (intervaloMonitoreo) {
+                    clearInterval(intervaloMonitoreo);
+                    intervaloMonitoreo = null;
+                }
+                
+                document.getElementById('btnIniciarMonitoreoAdmin').style.display = 'block';
+                document.getElementById('btnDetenerMonitoreoAdmin').style.display = 'none';
+                document.getElementById('statusMessage').textContent = 'Monitoreo detenido';
+                document.getElementById('statusMessage').className = 'status-offline';
+                
+                // Limpiar marcadores
+                Object.values(marcadoresSocios).forEach(marker => {
+                    if (marker) window.adminMap.removeLayer(marker);
+                });
+                marcadoresSocios = {};
+                
+                // Limpiar lista
+                document.getElementById('sociosList').innerHTML = 
+                    '<div style="text-align: center; color: #666; padding: 20px;">Monitoreo no activo</div>';
+            }
+
+            // Event listeners para admin de coto
+            document.getElementById('btnIniciarMonitoreoAdmin').addEventListener('click', iniciarMonitoreo);
+            document.getElementById('btnDetenerMonitoreoAdmin').addEventListener('click', detenerMonitoreo);
+
+            // Iniciar monitoreo automáticamente
+            iniciarMonitoreo();
         }
-      }
-
-      // Actualizar la lista en el panel
-      function actualizarListaAdministradores(admins) {
-        const listaDiv = document.getElementById('listaAdmins');
-        
-        if (admins.length === 0) {
-          listaDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No hay administradores registrados</div>';
-          return;
-        }
-        
-        listaDiv.innerHTML = admins.map(admin => `
-          <div class="admin-item">
-            <div class="admin-info">
-              <h4>${admin.NOMBRE}</h4>
-              <p><strong>Usuario:</strong> ${admin.USUARIO} | <strong>Email:</strong> ${admin.EMAIL || 'No especificado'}</p>
-              <p><strong>Coto:</strong> ${admin.COTO_NOMBRE} | <strong>Estado:</strong> 
-                <span class="${admin.ACTIVO ? 'status-activo' : 'status-inactivo'}">
-                  ${admin.ACTIVO ? 'ACTIVO' : 'INACTIVO'}
-                </span>
-              </p>
-            </div>
-            <div class="admin-actions">
-              ${admin.ACTIVO ? 
-                `<button class="btn-desactivar" onclick="cambiarEstadoAdmin(${admin.ID}, 0)">Desactivar</button>` :
-                `<button class="btn-activar" onclick="cambiarEstadoAdmin(${admin.ID}, 1)">Activar</button>`
-              }
-              <button class="btn-editar" onclick="editarAdministrador(${admin.ID})">Editar</button>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      // Cambiar estado de administrador (activar/desactivar)
-      async function cambiarEstadoAdmin(idAdmin, nuevoEstado) {
-        try {
-          const response = await fetch('http://localhost:3000/admin/estado', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              id: idAdmin,
-              activo: nuevoEstado
-            })
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            // Recargar lista
-            cargarAdministradores();
-          } else {
-            alert('Error: ' + data.error);
-          }
-        } catch (error) {
-          alert('Error de conexión');
-          console.error('Error:', error);
-        }
-      }
-
-      // Función para editar administrador (placeholder)
-      function editarAdministrador(idAdmin) {
-        const admin = listaAdministradores.find(a => a.ID === idAdmin);
-        if (admin) {
-          // Aquí puedes implementar la edición
-          alert(`Editar administrador: ${admin.NOMBRE}\n\nEsta funcionalidad está en desarrollo.`);
-        }
-      }
-
-      // Cerrar panel al hacer clic en el overlay
-      document.addEventListener('click', function(event) {
-        const adminPanel = document.getElementById('adminPanel');
-        const adminOverlay = document.getElementById('adminOverlay');
-        const gestionarBtn = document.getElementById('gestionarAdmins');
-        
-        if (adminOverlay && adminOverlay.style.display === 'block' && 
-            event.target === adminOverlay) {
-          cerrarPanelAdmin();
-        }
-      });
-
-      // Cerrar paneles al hacer clic fuera de ellos
-      document.addEventListener('click', function(event) {
-        const registroPanel = document.getElementById('registroPanel');
-        const monitoreoPanel = document.getElementById('monitoreoPanel');
-        const adminPanel = document.getElementById('adminPanel');
-        const menuBtn = document.getElementById('menuToggle');
-        const registrarBtn = document.getElementById('registrarSocio');
-        const monitorearBtn = document.getElementById('monitorearSocios');
-        const gestionarBtn = document.getElementById('gestionarAdmins');
-        
-        // Cerrar registro panel si se hace clic fuera
-        if (registroPanel.style.display === 'block' && 
-            !registroPanel.contains(event.target) && 
-            !menuBtn.contains(event.target) &&
-            !registrarBtn.contains(event.target)) {
-          registroPanel.style.display = 'none';
-        }
-        
-        // Cerrar monitoreo panel si se hace clic fuera
-        if (monitoreoPanel.style.display === 'block' && 
-            !monitoreoPanel.contains(event.target) && 
-            !menuBtn.contains(event.target) &&
-            !monitorearBtn.contains(event.target)) {
-          monitoreoPanel.style.display = 'none';
-        }
-
-        // Cerrar admin panel si se hace clic fuera (ya manejado arriba)
-      });
-
-      const script = document.createElement("script");
-      script.src = "https://unpkg.com/leaflet-geometryutil@0.10.0/src/leaflet.geometryutil.js";
-      document.head.appendChild(script);
-
-      map.zoomControl.remove();
     </script>
-  </body>
+</body>
 </html>

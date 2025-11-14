@@ -403,17 +403,19 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
                                 if (coordenadasCoto.isNotEmpty()) {
                                     dibujarCotoEnMapa()
-                                    startLocationUpdates()
+
+                                    Log.d("LOCATION", "🗺️ Coto cargado, forzando inicio de ubicación...")
+
+                                    // FORZAR INICIO DE UBICACIÓN
+                                    checkLocationPermission()
+
+                                    // Iniciar envío de ubicación al servidor
+                                    ubicacionUpdateHandler.postDelayed(enviarUbicacionRunnable, 5000)
 
                                     // RESETEAR para nueva verificación
                                     primeraVerificacion = true
                                     dentroDelCoto = false
                                     alertaMostrada = false
-
-                                    // Verificar ubicación actual inmediatamente
-                                    ultimaUbicacion?.let {
-                                        verificarUbicacionEnCoto(it)
-                                    }
 
                                     Toast.makeText(this@MainActivity, "$cotoActual cargado", Toast.LENGTH_SHORT).show()
                                 }
@@ -512,10 +514,15 @@ class MainActivity : AppCompatActivity(), LocationListener {
     }
 
     private fun checkLocationPermission() {
+        Log.d("LOCATION", "🔍 Verificando permisos de ubicación...")
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
+            Log.d("LOCATION", "📝 Solicitando permisos de ubicación...")
             requestPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
         } else {
+            Log.d("LOCATION", "✅ Permisos de ubicación concedidos")
+            checkIfGpsIsEnabled()
             startLocationUpdates()
             // Iniciar envío de ubicación si ya tenemos permisos
             ubicacionUpdateHandler.postDelayed(enviarUbicacionRunnable, 5000)
@@ -523,7 +530,24 @@ class MainActivity : AppCompatActivity(), LocationListener {
     }
 
     private fun checkIfGpsIsEnabled() {
-        // Verificación simple de GPS
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        val networkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+
+        Log.d("LOCATION", "📍 GPS activado: $gpsEnabled")
+        Log.d("LOCATION", "📍 Network location activado: $networkEnabled")
+
+        if (!gpsEnabled && !networkEnabled) {
+            Log.d("LOCATION", "⚠️ GPS y Network desactivados, mostrando alerta...")
+            AlertDialog.Builder(this)
+                .setTitle("Ubicación desactivada")
+                .setMessage("Para usar Venatus necesitas activar la ubicación.")
+                .setPositiveButton("Activar GPS") { _, _ ->
+                    startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                }
+                .setNegativeButton("Continuar", null)
+                .show()
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -531,23 +555,58 @@ class MainActivity : AppCompatActivity(), LocationListener {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             == PackageManager.PERMISSION_GRANTED) {
             try {
+                Log.d("LOCATION", "📍 Iniciando actualizaciones de ubicación...")
+
                 locationManager.requestLocationUpdates(
                     LocationManager.GPS_PROVIDER,
-                    1000L,
-                    1f,
+                    2000L,  // 2 segundos
+                    5f,     // 5 metros
                     this
                 )
 
                 locationManager.requestLocationUpdates(
                     LocationManager.NETWORK_PROVIDER,
-                    1000L,
-                    1f,
+                    2000L,  // 2 segundos
+                    10f,    // 10 metros
                     this
                 )
+
+                // Intentar obtener ubicación actual inmediatamente
+                val lastLocation = obtenerUltimaUbicacionConocida()
+                if (lastLocation != null) {
+                    Log.d("LOCATION", "📍 Usando última ubicación conocida")
+                    onLocationChanged(lastLocation)
+                }
+
+                Log.d("LOCATION", "✅ Actualizaciones de ubicación iniciadas correctamente")
+
             } catch (e: Exception) {
-                Log.e("LOCATION", "Error: ${e.message}")
+                Log.e("LOCATION", "❌ Error iniciando ubicación: ${e.message}")
             }
+        } else {
+            Log.e("LOCATION", "❌ Sin permisos de ubicación para iniciar updates")
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun obtenerUltimaUbicacionConocida(): Location? {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        var location: Location? = null
+
+        // Intentar obtener de GPS primero
+        location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        if (location == null) {
+            // Si no hay GPS, intentar con red
+            location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+        }
+
+        if (location != null) {
+            Log.d("LOCATION", "📍 Última ubicación conocida: ${location.latitude}, ${location.longitude}")
+        } else {
+            Log.d("LOCATION", "📍 No hay ubicación conocida disponible")
+        }
+
+        return location
     }
 
     private fun updateWebViewPosition(location: Location) {
