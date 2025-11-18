@@ -2,15 +2,24 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const Firebird = require("node-firebird");
+const path = require("path");
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
 
+// Configuración CORS para dominio público
+app.use(cors({
+    origin: ['http://venatus.es', 'https://venatus.es', 'http://178.211.133.67', 'https://178.211.133.67'],
+    credentials: true
+}));
+
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public'))); // Servir archivos estáticos
+
+// Configuración de la base de datos REMOTA
 const dbOptions = {
-  host: "localhost",
+  host: "51.210.98.37",  // Servidor de base de datos
   port: 3050,
-  database: "C:/datos/venatus.fdb",
+  database: "C:/venatus/VENATUS.FDB",
   user: "SYSDBA",
   password: "masterkey",
   lowercase_keys: false,
@@ -89,6 +98,11 @@ function ejecutarConsulta(sql, params = []) {
         });
     });
 }
+
+// ========== SERVIR ARCHIVOS ESTÁTICOS ==========
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // ========== ENDPOINT DE LOGIN UNIFICADO ==========
 app.post("/admin/login-unificado", async (req, res) => {
@@ -468,7 +482,9 @@ app.get("/status", async (req, res) => {
         res.json({ 
             status: "online",
             message: "Servidor y base de datos conectados correctamente",
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            domain: "venatus.es",
+            database: "51.210.98.37"
         });
     } catch (error) {
         res.status(500).json({
@@ -479,8 +495,12 @@ app.get("/status", async (req, res) => {
     }
 });
 
-// Iniciar servidor
-app.listen(3000, () => {
-    console.log("🚀 Servidor ejecutándose en http://localhost:3000");
-    console.log("✅ Sistema de login unificado activo");
+// Iniciar servidor en puerto público
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log("🚀 Servidor ejecutándose en:");
+    console.log(`   http://venatus.es:${PORT}`);
+    console.log(`   http://178.211.133.67:${PORT}`);
+    console.log("✅ Sistema de administración Venatus - PRODUCCIÓN");
+    console.log("📊 Base de datos remota: 51.210.98.37");
 });

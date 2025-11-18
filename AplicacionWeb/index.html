@@ -893,7 +893,7 @@
             }
 
             try {
-                const response = await fetch('http://localhost:3000/admin/login-unificado', {
+                const response = await fetch('/admin/login-unificado', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ usuario, password })
@@ -1124,7 +1124,7 @@
                 const nombre = prompt("Introduce un nombre para el área:", "Área 1") || "Área sin nombre";
 
                 try {
-                    const respuesta = await fetch("http://localhost:3000/guardar", {
+                    const respuesta = await fetch("/guardar", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ nombre, coordenadas: lastCoords })
@@ -1144,7 +1144,7 @@
             async function cargarAreas() {
                 try {
                     console.log("🔄 Cargando áreas...");
-                    const res = await fetch("http://localhost:3000/areas");
+                    const res = await fetch("/areas");
                     if (!res.ok) {
                         throw new Error(`Error HTTP: ${res.status}`);
                     }
@@ -1184,7 +1184,7 @@
 
                 try {
                     console.log("🔄 Solicitando área ID:", selectedId);
-                    const res = await fetch(`http://localhost:3000/areas/${selectedId}`);
+                    const res = await fetch(`/areas/${selectedId}`);
                     
                     if (!res.ok) {
                         const errorText = await res.text();
@@ -1261,7 +1261,7 @@
                 }
 
                 try {
-                    const respuesta = await fetch('http://localhost:3000/registrar-socio', {
+                    const respuesta = await fetch('/registrar-socio', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ nombre, usuario, contrasena, email, telefono })
@@ -1306,7 +1306,7 @@
                 }
                 
                 try {
-                    const response = await fetch(`http://localhost:3000/monitoreo/coto/${cotoSeleccionadoId}/socios`);
+                    const response = await fetch(`/monitoreo/coto/${cotoSeleccionadoId}/socios`);
                     const data = await response.json();
                     
                     if (response.ok) {
@@ -1431,7 +1431,7 @@
             // Cargar cotos para el select de administradores
             async function cargarCotosParaAdmin() {
                 try {
-                    const response = await fetch('http://localhost:3000/areas');
+                    const response = await fetch('/areas');
                     const areas = await response.json();
                     
                     const select = document.getElementById('adminCoto');
@@ -1475,7 +1475,7 @@
                 }
 
                 try {
-                    const response = await fetch('http://localhost:3000/admin/crear', {
+                    const response = await fetch('/admin/crear', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
@@ -1520,7 +1520,7 @@
             // Cargar lista de administradores
             async function cargarAdministradores() {
                 try {
-                    const response = await fetch('http://localhost:3000/admin/listar');
+                    const response = await fetch('/admin/listar');
                     const administradores = await response.json();
                     
                     listaAdministradores = administradores;
@@ -1568,7 +1568,7 @@
             // Cambiar estado de administrador (activar/desactivar)
             window.cambiarEstadoAdmin = async function(idAdmin, nuevoEstado) {
                 try {
-                    const response = await fetch('http://localhost:3000/admin/estado', {
+                    const response = await fetch('/admin/estado', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
@@ -1678,7 +1678,7 @@
                 if (!currentCotoId) return;
 
                 try {
-                    const response = await fetch(`http://localhost:3000/monitoreo/coto/${currentCotoId}/socios`);
+                    const response = await fetch(`/monitoreo/coto/${currentCotoId}/socios`);
                     const data = await response.json();
                     
                     if (response.ok) {
