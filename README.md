@@ -1,13 +1,13 @@
-# 🗺️ Venatus - Sistema de Monitoreo de Cotos
+# Venatus - Sistema de Monitoreo de Cotos
 
-## 📖 Descripción del Proyecto
+## Descripción del Proyecto
 
 **Venatus** es una solución completa desarrollada como proyecto de prácticas para el **Grado Superior en Desarrollo de Aplicaciones Multiplataforma**.  
 El sistema permite el **monitoreo en tiempo real** de ubicaciones dentro de cotos de caza mediante una **aplicación Android nativa** y un **panel web administrativo**.
 
 ---
 
-### ⚠️ Aviso Importante sobre Propiedad Intelectual
+### Aviso Importante sobre Propiedad Intelectual
 
 Este proyecto fue **desarrollado íntegramente por estudiantes** como parte de sus prácticas formativas.  
 El código fuente, diseño y arquitectura son **propiedad intelectual de los desarrolladores**.  
@@ -15,9 +15,9 @@ La empresa receptora tiene derechos de uso según el acuerdo de prácticas, pero
 
 ---
 
-## ✨ Características Principales
+## Características Principales
 
-### 📱 Aplicación Android
+### Aplicación Android
 - **Autenticación segura** de socios  
 - **Monitoreo en tiempo real** de ubicación GPS  
 - **Detección automática** de entrada/salida de cotos  
@@ -25,7 +25,7 @@ La empresa receptora tiene derechos de uso según el acuerdo de prácticas, pero
 - **Notificaciones visuales** de estado  
 - **Envío periódico** de ubicación al servidor  
 
-### 🌐 Panel Web Administrativo
+### Panel Web Administrativo
 - **Gestión visual** de cotos mediante dibujo en mapa  
 - **Registro y administración** de socios  
 - **Monitoreo en tiempo real** de todos los socios activos  
@@ -34,21 +34,21 @@ La empresa receptora tiene derechos de uso según el acuerdo de prácticas, pero
 
 ---
 
-## 🧰 Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
-### 🖥️ Backend
+### Backend
 - **Node.js** con Express  
 - **Firebird Database**  
 - **RESTful API**  
 - **Almacenamiento en memoria** para ubicaciones en tiempo real  
 
-### 💻 Frontend Web
+### Frontend Web
 - **HTML5, CSS3, JavaScript**  
 - **Leaflet.js** para mapas  
 - **Leaflet Draw** para dibujo de polígonos  
 - **Diseño responsive**  
 
-### 📱 Mobile
+### Mobile
 - **Kotlin** nativo para Android  
 - **Android Location Services**  
 - **WebView** con Leaflet para mapas  
@@ -57,11 +57,11 @@ La empresa receptora tiene derechos de uso según el acuerdo de prácticas, pero
 
 ---
 
-## 🗂️ Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 Venatus/
-├── 📱 android-app/
+├──  android-app/
 │   ├── app/
 │   │   ├── src/main/
 │   │   │   ├── java/com/example/venatus/
@@ -82,28 +82,28 @@ Venatus/
 │   │   │       └── mapa_limpio.html
 │   │   └── build.gradle.kts
 │   └── gradle/
-├── 🌐 web-admin/
+├──  web-admin/
 │   ├── index.html
 │   ├── styles.css
 │   └── script.js
-├── 🔧 server/
+├──  server/
 │   ├── server.js
 │   ├── package.json
 │   └── node_modules/
-├── 📄 documentation/
+├──  documentation/
 │   ├── API_Documentation.md
 │   ├── Database_Schema.md
 │   └── User_Manual.md
-└── 🗃️ database/
+└──  database/
     ├── schema.sql
     └── sample_data.sql
 ```
 
 ---
 
-## ⚙️ Instalación y Configuración
+## Instalación y Configuración
 
-### 🧾 Prerrequisitos
+### Prerrequisitos
 - Node.js 16+
 - Firebird Database 3.0+
 - Android Studio (para desarrollo móvil)
@@ -111,7 +111,7 @@ Venatus/
 
 ---
 
-### 🚀 Servidor Backend
+### Servidor Backend
 ```bash
 cd server
 npm install
@@ -122,7 +122,7 @@ El servidor se ejecutará en **http://localhost:3000**
 
 ---
 
-### 🌍 Panel Web
+### Panel Web
 ```bash
 cd web-admin
 # Servir los archivos estáticos con un servidor web local
@@ -132,7 +132,7 @@ python -m http.server 8080
 
 ---
 
-### 📲 Aplicación Android
+### Aplicación Android
 1. Abrir **Android Studio**  
 2. `File → Open → Seleccionar carpeta android-app`  
 3. Esperar a que Gradle sincronice las dependencias  
@@ -141,7 +141,7 @@ python -m http.server 8080
 
 ---
 
-## 🗃️ Configuración de Base de Datos
+## Configuración de Base de Datos
 
 ### 1. Instalación de Firebird
 - Descargar e instalar **Firebird 3.0+**
@@ -186,7 +186,7 @@ const dbOptions = {
 
 ---
 
-## 🧭 Uso del Sistema
+## Uso del Sistema
 
 ### Para Socios (Android)
 1. Iniciar sesión con credenciales de socio  
@@ -204,64 +204,64 @@ const dbOptions = {
 
 ---
 
-## 🌐 API Endpoints Principales
+## API Endpoints Principales
 
-### 🔐 Autenticación
+### Autenticación
 - `POST /validar-login` → Validar credenciales de socio  
 - `POST /registrar-socio` → Registrar nuevo socio  
 
-### 🏞️ Gestión de Cotos
+### Gestión de Cotos
 - `GET /areas` → Obtener listado de todos los cotos  
 - `GET /areas/:id` → Obtener información específica de un coto  
 - `POST /guardar` → Guardar nuevo coto en la base de datos  
 
-### 📍 Monitoreo en Tiempo Real
+### Monitoreo en Tiempo Real
 - `POST /socio/ubicacion` → Envío de ubicación desde app Android  
 - `GET /monitoreo/coto/:id/socios` → Obtener socios en un coto específico  
 - `GET /monitoreo/todos-socios` → Obtener todas las ubicaciones (debug)  
 
 ---
 
-## 🧠 Funcionalidades Técnicas Destacadas
+## Funcionalidades Técnicas Destacadas
 
-### 🔐 Sistema de Autenticación
+### Sistema de Autenticación
 - Validación segura de credenciales en base de datos Firebird  
 - Manejo de sesiones y tokens  
 - Protección de endpoints sensibles  
 
-### 📍 Algoritmo de Geofencing
+### Algoritmo de Geofencing
 - Detección precisa de polígonos mediante algoritmo punto-en-polígono  
 - Optimizado para polígonos complejos con múltiples vértices  
 - Notificaciones instantáneas de cambios de estado  
 
-### 🔄 Comunicación en Tiempo Real
+### Comunicación en Tiempo Real
 - Actualizaciones periódicas cada 10 segundos desde Android  
 - Sincronización bidireccional entre app y panel web  
 - Manejo robusto de conexiones intermitentes  
 
-### 🗺️ Gestión de Mapas
+### Gestión de Mapas
 - Integración con **OpenStreetMap** mediante **Leaflet.js**  
 - Dibujo interactivo de polígonos para definir cotos  
 - Visualización en tiempo real de ubicaciones  
 
 ---
 
-## 🧩 Desarrollo Técnico
+## Desarrollo Técnico
 
-### 🏗️ Arquitectura del Sistema
+### Arquitectura del Sistema
 ```
 Clientes Android ←→ API REST ←→ Node.js Server ←→ Firebird DB
          ↑
 Panel Web Admin ↗
 ```
 
-### 🔒 Características de Seguridad
+### Características de Seguridad
 - Validación de entrada en todos los endpoints  
 - Manejo seguro de permisos de ubicación  
 - Protección contra inyección SQL  
 - Validación de formatos de coordenadas  
 
-### ⚡ Optimizaciones Implementadas
+### Optimizaciones Implementadas
 - Caché de ubicaciones en memoria para rápido acceso  
 - Algoritmos eficientes para detección en polígonos grandes  
 - Manejo de desconexiones y reconexiones automáticas  
@@ -269,30 +269,30 @@ Panel Web Admin ↗
 
 ---
 
-## 🧰 Solución de Problemas Comunes
+## Solución de Problemas Comunes
 
-### ❌ Error de Conexión a Base de Datos
+### Error de Conexión a Base de Datos
 - Verificar que Firebird esté ejecutándose  
 - Confirmar ruta correcta de la base de datos  
 - Validar credenciales de SYSDBA  
 
-### 📡 Problemas de Ubicación en Android
+### Problemas de Ubicación en Android
 - Verificar permisos de ubicación concedidos  
 - Confirmar que el GPS esté activado  
 - Revisar configuración de alta precisión  
 
-### 🗺️ El Mapa no se Carga
+### El Mapa no se Carga
 - Verificar conexión a internet  
 - Confirmar que los archivos HTML estén en la carpeta **assets**  
 - Revisar consola de desarrollador para errores  
 
 ---
 
-## 🤝 Contribución
+## Contribución
 
 Este proyecto fue desarrollado como trabajo de prácticas por estudiantes del **Grado Superior en Desarrollo de Aplicaciones Multiplataforma**.
 
-### 👨‍💻 Desarrolladores
+### Desarrolladores
 - [Pablo Nicolás Siles Arano]  
 - [Enrique Pérez González]  
 
@@ -300,16 +300,16 @@ Derechos de autor y propiedad intelectual reservados para los desarrolladores.
 
 ---
 
-## 📜 Licencia
+## Licencia
 
 Este proyecto se comparte con fines **educativos y de portfolio**.  
 El código es propiedad de sus desarrolladores y se requiere **permiso explícito** para su uso comercial.
 
 ---
 
-## 📬 Contacto
+## Contacto
 
 Para información sobre licencias o uso del código:
 
-- 📧 [pablonsiles@gmail.com / epergon2008@g.educaand.es]  
-- 💼 [LinkedIn/Perfil profesional]  
+- [pablonsiles@gmail.com / epergon2008@g.educaand.es]  
+- [LinkedIn/Perfil profesional]  
