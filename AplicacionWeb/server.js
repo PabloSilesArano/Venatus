@@ -17,9 +17,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Configuración de la base de datos
 const dbOptions = {
-    host: "localhost",
+    host: "51.210.98.37",
     port: 3050,
-    database: "C:/datos/venatus.fdb",
+    database: "C:\venatus\VENATUS.FDB",
     user: "SYSDBA",
     password: "masterkey",
     lowercase_keys: false,

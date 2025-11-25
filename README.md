@@ -436,20 +436,8 @@ El código es propiedad de sus desarrolladores y se requiere **permiso explícit
 
 Para información sobre licencias o uso del código:
 
-- **Email**: pablonsiles@gmail.com / epergon2008@g.educaand.es  
-- **LinkedIn**: Perfil profesional  
-
----
-
-## Próximas Características (Roadmap)
-
-- [ ] **App iOS** nativa con Swift
-- [ ] **Panel de estadísticas** avanzadas
-- [ ] **Sistema de notificaciones** push
-- [ ] **Exportación de reportes** en PDF/Excel
-- [ ] **Integración con SIG** (Sistemas de Información Geográfica)
-- [ ] **Modo offline** para zonas sin cobertura
-- [ ] **Sistema de cupos** y límites de captura
+- **Email**: pablonsiles@gmail.com / enriquepg13@gmail.com
+- **LinkedIn**: www.linkedin.com/in/pablosles003 - www.linkedin.com/in/epg013
 
 ---
 
