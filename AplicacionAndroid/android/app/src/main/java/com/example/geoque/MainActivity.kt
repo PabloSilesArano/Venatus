@@ -174,14 +174,9 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
     // ========== MENÚ PRINCIPAL ==========
     private fun mostrarMenuFlotante() {
-        val estadoCoto = when {
-            cotoActual == null -> "❌ Sin coto"
-            dentroDelCoto -> "✅ En coto: $cotoActual"
-            else -> "🚫 Fuera de: $cotoActual"
-        }
 
         val opciones = arrayOf(
-            "🌿 Cargar Cotos - $estadoCoto",
+            "🌿 Cargar Cotos",
             "➕ Aumentar Zoom",
             "➖ Reducir Zoom",
             "🗑️ Limpiar Mapa",
