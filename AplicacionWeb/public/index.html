@@ -117,7 +117,7 @@
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            z-index: 9999; /* Z-INDEX MUY ALTO */
+            z-index: 9999;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             transition: all 0.3s ease;
             color: #2A9DF4;
@@ -164,6 +164,48 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             z-index: 999;
             text-align: center;
+        }
+
+        /* Indicador de modo edición */
+        #modoEdicion {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,193,7,0.95);
+            color: #856404;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            z-index: 999;
+            display: none;
+        }
+
+        /* Botón Finalizar Edición */
+        #btnFinalizarEdicion {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            transition: all 0.3s ease;
+        }
+
+        #btnFinalizarEdicion:hover {
+            background: #218838;
+            transform: translateX(-50%) scale(1.05);
         }
 
         #menu {
@@ -258,15 +300,19 @@
 
         /* Panel de registro de socios */
         #registroPanel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255,255,255,0.95);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-            z-index: 1000;
-            width: 300px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.98);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            z-index: 1001;
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
             display: none;
         }
 
@@ -288,7 +334,7 @@
 
         /* Panel de Gestión de Administradores */
         #adminPanel {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -304,48 +350,75 @@
             display: none;
         }
 
-        /* Controles de zoom para la página Admin Cotos */
-        #adminScreen #zoomControls {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            z-index: 1000;
-        }
-
-        #adminScreen #zoomControls button {
-            width: 30px;
-            height: 30px;
-            border: none;
-            border-radius: 5px;
-            background: rgba(255,255,255,0.9);
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #adminScreen #zoomControls button:hover {
-            background: rgba(255,255,255,1);
-            transform: scale(1.1);
-        }
-
-        /* Overlay para fondo oscuro */
-        #adminOverlay {
+        /* Panel de Modificación de Cotos */
+        #modificarPanel {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.98);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            z-index: 1001;
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
             display: none;
+        }
+
+        #modificarPanel h3 {
+            margin-top: 0;
+            color: #2A9DF4;
+            margin-bottom: 15px;
+        }
+
+        #modificarPanel select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        #modificarPanel button {
+            width: 100%;
+            padding: 12px;
+            background: #2A9DF4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        #modificarPanel button:hover {
+            background: #1e87d4;
+        }
+
+        #btnGuardarCambios {
+            background: #28a745 !important;
+        }
+
+        #btnGuardarCambios:hover {
+            background: #218838 !important;
+        }
+
+        #btnCancelarModificacion {
+            background: #6c757d !important;
+        }
+
+        #btnCancelarModificacion:hover {
+            background: #5a6268 !important;
+        }
+
+        #mensajeModificacion {
+            margin-top: 10px;
+            font-size: 14px;
+            text-align: center;
         }
 
         /* Items de administrador en la lista */
@@ -429,23 +502,6 @@
             cursor: pointer;
             font-size: 16px;
             margin-top: 10px;
-        }
-
-        #registroPanel {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255,255,255,0.98);
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-            z-index: 1001;
-            width: 90%;
-            max-width: 400px;
-            max-height: 90vh;
-            overflow-y: auto;
-            display: none;
         }
 
         #registroPanel button:hover {
@@ -654,6 +710,18 @@
             left: 15px;
             z-index: 9999;
         }
+
+        /* Overlay para fondo oscuro */
+        #adminOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -682,7 +750,11 @@
         
         <div id="info">Dibuja un polígono para marcar el coto</div>
         <div id="posicion">Posición actual: ---, ---</div>
+        <div id="modoEdicion">✏️ MODO EDICIÓN - Puedes modificar el coto en el mapa</div>
         <div id="map"></div>
+
+        <!-- Botón Finalizar Edición -->
+        <button id="btnFinalizarEdicion">✅ Finalizar Edición</button>
 
         <!-- Panel de registro de socios -->
         <div id="registroPanel">
@@ -786,10 +858,42 @@
             </div>
         </div>
 
+        <!-- Panel de Modificación de Cotos -->
+        <div id="modificarPanel">
+            <h3>✏️ Modificar Coto</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Selecciona el coto a modificar:</label>
+                <select id="selectCotoModificar">
+                    <option value="">-- Selecciona un coto --</option>
+                </select>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <h4 style="margin-top: 0; color: #333;">📝 Instrucciones:</h4>
+                <ul style="font-size: 14px; margin: 0; padding-left: 20px;">
+                    <li>Selecciona un coto para cargarlo en el mapa</li>
+                    <li>Haz clic en "Editar Coto" para comenzar la edición</li>
+                    <li>Puedes mover los puntos existentes arrastrándolos</li>
+                    <li>Haz clic en una línea para añadir un nuevo punto</li>
+                    <li>Haz clic en un punto y presiona "Eliminar" para quitarlo</li>
+                    <li>Usa "Finalizar Edición" cuando termines de modificar</li>
+                    <li>Guarda los cambios definitivamente</li>
+                </ul>
+            </div>
+            
+            <button id="btnCargarCoto">🗺️ Cargar Coto</button>
+            <button id="btnEditarCoto" style="display: none; background: #ffc107; color: black;">✏️ Editar Coto</button>
+            <button id="btnGuardarCambios" style="display: none;">💾 Guardar Cambios</button>
+            <button id="btnCancelarModificacion">❌ Cancelar</button>
+            
+            <div id="mensajeModificacion"></div>
+        </div>
+
         <div id="menu">
             <button id="menuToggle">&#9776;</button>
             <div id="menuItems">
-                <button id="drawPolygon">Dibujar coto</button>
+                <button id="drawPolygon">Delimitar coto</button>
                 <button id="deletePolygon">Borrar coto</button>
                 <select id="selectArea">
                     <option value="">-- Selecciona un coto --</option>
@@ -801,11 +905,15 @@
                 <button id="registrarSocio">👤 Registrar Socio</button>
                 <button id="monitorearSocios">👥 Monitorear Socios</button>
                 
-                <!-- NUEVA OPCIÓN PARA GESTIONAR ADMINISTRADORES -->
+                <!-- NUEVA OPCIÓN PARA MODIFICAR COTOS -->
+                <div class="menu-separator"></div>
+                <button id="modificarCoto">✏️ Modificar Coto</button>
+                
+                <!-- Gestión de administradores -->
                 <div class="menu-separator"></div>
                 <button id="gestionarAdmins">👑 Gestionar Administradores</button>
                 
-                <!-- BOTÓN DE CERRAR SESIÓN DENTRO DEL MENÚ (SOLO PARA SUPER ADMIN) -->
+                <!-- Botón de cerrar sesión -->
                 <div class="menu-separator"></div>
                 <button id="logoutSuperAdmin" class="logout-btn" style="width: 100%; text-align: left; margin: 0;">🚪 Cerrar Sesión</button>
             </div>
@@ -874,7 +982,7 @@
     <script>
         // Variables globales
         let currentUser = null;
-        let userType = null; // 'superadmin' o 'admin'
+        let userType = null;
 
         // ========== FUNCIONALIDAD DE LOGIN ==========
 
@@ -991,6 +1099,12 @@
 
             // Variables para administradores
             let listaAdministradores = [];
+
+            // Variables para modificación de cotos
+            let cotoEnEdicion = null;
+            let editPolygon = null;
+            let editLayer = null;
+            let modoEdicionActivo = false;
 
             // Mostrar/ocultar selección de coto según tipo de admin
             document.getElementById('adminTipo').addEventListener('change', function() {
@@ -1597,15 +1711,283 @@
                 }
             }
 
-            // Cerrar panel al hacer clic en el overlay
-            document.addEventListener('click', function(event) {
-                const adminPanel = document.getElementById('adminPanel');
-                const adminOverlay = document.getElementById('adminOverlay');
-                
-                if (adminOverlay && adminOverlay.style.display === 'block' && 
-                    event.target === adminOverlay) {
-                    cerrarPanelAdmin();
+            // ========== FUNCIONALIDAD DE MODIFICACIÓN DE COTOS ==========
+
+            document.getElementById('modificarCoto').addEventListener('click', function() {
+                mostrarPanelModificacion();
+            });
+
+            function mostrarPanelModificacion() {
+                // Crear overlay si no existe
+                if (!document.getElementById('adminOverlay')) {
+                    const overlay = document.createElement('div');
+                    overlay.id = 'adminOverlay';
+                    document.getElementById('superAdminScreen').appendChild(overlay);
                 }
+                
+                document.getElementById('adminOverlay').style.display = 'block';
+                document.getElementById('modificarPanel').style.display = 'block';
+                menuItems.style.display = 'none';
+                
+                // Cargar lista de cotos para modificar
+                cargarCotosParaModificacion();
+            }
+
+            function cerrarPanelModificacion() {
+                document.getElementById('adminOverlay').style.display = 'none';
+                document.getElementById('modificarPanel').style.display = 'none';
+                
+                // Limpiar edición si estaba activa
+                if (editLayer) {
+                    window.superAdminMap.removeLayer(editLayer);
+                    editLayer = null;
+                }
+                cotoEnEdicion = null;
+                document.getElementById('btnGuardarCambios').style.display = 'none';
+                document.getElementById('btnEditarCoto').style.display = 'none';
+                document.getElementById('mensajeModificacion').innerHTML = '';
+                
+                // Salir del modo edición si estaba activo
+                salirModoEdicion();
+            }
+
+            // Cargar cotos para el select de modificación
+            async function cargarCotosParaModificacion() {
+                try {
+                    const response = await fetch('/areas');
+                    const areas = await response.json();
+                    
+                    const select = document.getElementById('selectCotoModificar');
+                    select.innerHTML = '<option value="">-- Selecciona un coto --</option>';
+                    
+                    areas.forEach(area => {
+                        const option = document.createElement('option');
+                        option.value = area.id;
+                        option.textContent = area.nombre;
+                        select.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error cargando cotos para modificación:', error);
+                    document.getElementById('mensajeModificacion').innerHTML = 
+                        '<span style="color: red;">❌ Error cargando cotos</span>';
+                }
+            }
+
+            // Cargar coto seleccionado para edición
+            document.getElementById('btnCargarCoto').addEventListener('click', async function() {
+                const cotoId = document.getElementById('selectCotoModificar').value;
+                const mensajeDiv = document.getElementById('mensajeModificacion');
+                
+                if (!cotoId) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ Selecciona un coto primero</span>';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/areas/${cotoId}`);
+                    const area = await response.json();
+                    
+                    if (!area.coords || area.coords.length === 0) {
+                        mensajeDiv.innerHTML = '<span style="color: red;">❌ Este coto no tiene coordenadas válidas</span>';
+                        return;
+                    }
+
+                    // Limpiar cualquier polígono existente
+                    drawnItems.clearLayers();
+                    if (editLayer) {
+                        window.superAdminMap.removeLayer(editLayer);
+                    }
+
+                    // Crear polígono
+                    editPolygon = L.polygon(area.coords, {
+                        color: "#2A9DF4",
+                        weight: 4,
+                        fillOpacity: 0.3
+                    }).addTo(window.superAdminMap);
+
+                    // Centrar el mapa en el polígono
+                    window.superAdminMap.fitBounds(editPolygon.getBounds());
+                    
+                    // Guardar referencia al coto en edición
+                    cotoEnEdicion = {
+                        id: area.id,
+                        nombre: area.nombre,
+                        coordsOriginales: area.coords
+                    };
+                    
+                    // Mostrar botones
+                    document.getElementById('btnEditarCoto').style.display = 'block';
+                    document.getElementById('btnGuardarCambios').style.display = 'none';
+                    
+                    mensajeDiv.innerHTML = '<span style="color: green;">✅ Coto cargado. Haz clic en "Editar Coto" para modificarlo.</span>';
+                    
+                } catch (error) {
+                    console.error('Error cargando coto para edición:', error);
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ Error cargando el coto</span>';
+                }
+            });
+
+            // Iniciar edición del coto
+            document.getElementById('btnEditarCoto').addEventListener('click', function() {
+                if (!cotoEnEdicion || !editPolygon) {
+                    alert('No hay ningún coto cargado para editar');
+                    return;
+                }
+
+                iniciarModoEdicion();
+            });
+
+            function iniciarModoEdicion() {
+                if (!editPolygon) return;
+
+                // Ocultar panel de modificación
+                document.getElementById('modificarPanel').style.display = 'none';
+                document.getElementById('adminOverlay').style.display = 'none';
+                
+                // Ocultar menú
+                menuItems.style.display = 'none';
+                
+                // Ocultar coordenadas de socios (monitoreo)
+                document.getElementById('monitoreoPanel').style.display = 'none';
+                document.getElementById('info').style.display = 'none';
+                document.getElementById('posicion').style.display = 'none';
+                
+                // Detener monitoreo si estaba activo
+                if (intervaloMonitoreo) {
+                    detenerMonitoreo();
+                }
+                
+                // Limpiar marcadores de socios del mapa
+                Object.values(marcadoresSocios).forEach(marker => {
+                    if (marker) window.superAdminMap.removeLayer(marker);
+                });
+                marcadoresSocios = {};
+                
+                // Mostrar indicador de modo edición
+                document.getElementById('modoEdicion').style.display = 'block';
+                document.getElementById('modoEdicion').textContent = `✏️ EDITANDO: ${cotoEnEdicion.nombre}`;
+                
+                // Mostrar botón finalizar edición
+                document.getElementById('btnFinalizarEdicion').style.display = 'block';
+                
+                // Cambiar estilo del polígono para indicar edición
+                editPolygon.setStyle({
+                    color: "#ff7800",
+                    weight: 4,
+                    fillOpacity: 0.2
+                });
+                
+                // Hacer el polígono editable
+                editLayer = new L.FeatureGroup([editPolygon]);
+                window.superAdminMap.addLayer(editLayer);
+                
+                // Habilitar edición
+                editPolygon.editing.enable();
+                
+                modoEdicionActivo = true;
+                
+                console.log('✅ Modo edición activado para coto:', cotoEnEdicion.nombre);
+            }
+
+            function salirModoEdicion() {
+                // Ocultar indicadores de edición
+                document.getElementById('modoEdicion').style.display = 'none';
+                document.getElementById('btnFinalizarEdicion').style.display = 'none';
+                
+                // Restaurar elementos normales
+                document.getElementById('info').style.display = 'block';
+                document.getElementById('info').textContent = 'Dibuja un polígono para marcar el coto';
+                
+                if (editPolygon) {
+                    // Restaurar estilo normal
+                    editPolygon.setStyle({
+                        color: "#2A9DF4",
+                        weight: 4,
+                        fillOpacity: 0.3
+                    });
+                    
+                    // Deshabilitar edición
+                    if (editPolygon.editing) {
+                        editPolygon.editing.disable();
+                    }
+                }
+                
+                if (editLayer) {
+                    window.superAdminMap.removeLayer(editLayer);
+                    editLayer = null;
+                }
+                
+                modoEdicionActivo = false;
+                
+                console.log('❌ Modo edición desactivado');
+            }
+
+            // Finalizar edición
+            document.getElementById('btnFinalizarEdicion').addEventListener('click', function() {
+                salirModoEdicion();
+                
+                // Mostrar nuevamente el panel de modificación
+                document.getElementById('modificarPanel').style.display = 'block';
+                document.getElementById('adminOverlay').style.display = 'block';
+                
+                // Mostrar botón guardar cambios
+                document.getElementById('btnGuardarCambios').style.display = 'block';
+                document.getElementById('btnEditarCoto').style.display = 'none';
+                
+                document.getElementById('mensajeModificacion').innerHTML = 
+                    '<span style="color: green;">✅ Edición finalizada. Puedes guardar los cambios.</span>';
+            });
+
+            // Guardar cambios del coto modificado
+            document.getElementById('btnGuardarCambios').addEventListener('click', async function() {
+                if (!cotoEnEdicion || !editPolygon) {
+                    alert('No hay ningún coto en edición');
+                    return;
+                }
+
+                const mensajeDiv = document.getElementById('mensajeModificacion');
+                const nuevasCoords = editPolygon.getLatLngs()[0].map(p => ({ lat: p.lat, lng: p.lng }));
+
+                if (nuevasCoords.length < 3) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ El polígono debe tener al menos 3 puntos</span>';
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/modificar-coto', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: cotoEnEdicion.id,
+                            coordenadas: nuevasCoords
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        mensajeDiv.innerHTML = '<span style="color: green;">✅ ' + data.mensaje + '</span>';
+                        
+                        // Actualizar la lista de cotos
+                        cargarAreas();
+                        cargarCotosParaModificacion();
+                        
+                        // Cerrar panel después de 2 segundos
+                        setTimeout(() => {
+                            cerrarPanelModificacion();
+                        }, 2000);
+                    } else {
+                        mensajeDiv.innerHTML = '<span style="color: red;">❌ ' + data.error + '</span>';
+                    }
+                } catch (error) {
+                    console.error('Error guardando cambios:', error);
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ Error de conexión con el servidor</span>';
+                }
+            });
+
+            // Cancelar modificación
+            document.getElementById('btnCancelarModificacion').addEventListener('click', function() {
+                cerrarPanelModificacion();
             });
 
             // Cerrar paneles al hacer clic fuera de ellos
@@ -1613,10 +1995,13 @@
                 const registroPanel = document.getElementById('registroPanel');
                 const monitoreoPanel = document.getElementById('monitoreoPanel');
                 const adminPanel = document.getElementById('adminPanel');
+                const modificarPanel = document.getElementById('modificarPanel');
                 const menuBtn = document.getElementById('menuToggle');
                 const registrarBtn = document.getElementById('registrarSocio');
                 const monitorearBtn = document.getElementById('monitorearSocios');
                 const gestionarBtn = document.getElementById('gestionarAdmins');
+                const modificarBtn = document.getElementById('modificarCoto');
+                const adminOverlay = document.getElementById('adminOverlay');
                 
                 // Cerrar registro panel si se hace clic fuera
                 if (registroPanel.style.display === 'block' && 
@@ -1632,6 +2017,13 @@
                     !menuBtn.contains(event.target) &&
                     !monitorearBtn.contains(event.target)) {
                     monitoreoPanel.style.display = 'none';
+                }
+
+                // Cerrar modificar panel si se hace clic en overlay
+                if (adminOverlay && adminOverlay.style.display === 'block' && 
+                    event.target === adminOverlay && 
+                    modificarPanel.style.display === 'block') {
+                    cerrarPanelModificacion();
                 }
             });
 

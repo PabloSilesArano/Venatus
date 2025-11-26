@@ -8,18 +8,18 @@ const app = express();
 
 // ========== CONFIGURACIÓN ==========
 app.use(cors({
-    origin: ['http://venatus.es', 'https://venatus.es', 'http://178.211.133.67', 'https://178.211.133.67'],
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true
 }));
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuración de la base de datos
+// Configuración de la base de datos LOCAL
 const dbOptions = {
-    host: "51.210.98.37",
+    host: "localhost",
     port: 3050,
-    database: "C:\venatus\VENATUS.FDB",
+    database: "C:\\datos\\VENATUS.FDB",
     user: "SYSDBA",
     password: "masterkey",
     lowercase_keys: false,
@@ -116,8 +116,8 @@ app.get("/status", async (req, res) => {
             status: "online",
             message: "Servidor y base de datos conectados correctamente",
             timestamp: new Date().toISOString(),
-            domain: "venatus.es",
-            database: "51.210.98.37"
+            domain: "localhost",
+            database: "C:\\datos\\VENATUS.FDB"
         });
     } catch (error) {
         res.status(500).json({
@@ -345,6 +345,44 @@ app.post("/guardar", async (req, res) => {
     } catch (error) {
         console.error('❌ Error guardando área:', error);
         res.status(500).json({ error: "Error al guardar en la base de datos" });
+    }
+});
+
+// ========== NUEVA RUTA: MODIFICAR COTO ==========
+
+app.put("/modificar-coto", async (req, res) => {
+    const { id, coordenadas } = req.body;
+    console.log(`✏️ Modificando coto ID: ${id}`);
+
+    if (!id || !coordenadas || coordenadas.length < 3) {
+        return res.status(400).json({ error: "ID y coordenadas válidas son obligatorias (mínimo 3 puntos)" });
+    }
+
+    try {
+        // Convertir coordenadas a formato texto
+        const perimetroTexto = coordenadas
+            .map(p => `${p.lat.toFixed(6)},${p.lng.toFixed(6)}`)
+            .join(';');
+
+        // Calcular nuevo centro
+        const latitudes = coordenadas.map(p => p.lat);
+        const longitudes = coordenadas.map(p => p.lng);
+        const centroX = longitudes.reduce((a, b) => a + b, 0) / longitudes.length;
+        const centroY = latitudes.reduce((a, b) => a + b, 0) / latitudes.length;
+
+        // Actualizar en base de datos
+        const sql = "UPDATE COTOS SET PERIMETRO = ?, CENTRO_X = ?, CENTRO_Y = ? WHERE ID = ?";
+        await ejecutarConsulta(sql, [perimetroTexto, centroX, centroY, id]);
+
+        console.log(`✅ Coto ${id} modificado correctamente - ${coordenadas.length} puntos`);
+        res.json({ 
+            mensaje: "✅ Coto modificado correctamente",
+            puntos: coordenadas.length,
+            centro: { x: centroX, y: centroY }
+        });
+    } catch (error) {
+        console.error('❌ Error modificando coto:', error);
+        res.status(500).json({ error: "Error al modificar el coto en la base de datos" });
     }
 });
 
@@ -831,10 +869,9 @@ app.post("/inicializar-datos", async (req, res) => {
 // ========== INICIALIZACIÓN DEL SERVIDOR ==========
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, 'localhost', () => {
     console.log("🚀 Servidor ejecutándose en:");
-    console.log(`   http://venatus.es:${PORT}`);
-    console.log(`   http://178.211.133.67:${PORT}`);
-    console.log("✅ Sistema de administración Venatus - PRODUCCIÓN");
-    console.log("📊 Base de datos remota: 51.210.98.37");
+    console.log(`   http://localhost:${PORT}`);
+    console.log("✅ Sistema de administración Venatus - DESARROLLO LOCAL");
+    console.log("📊 Base de datos local: C:\\datos\\VENATUS.FDB");
 });
