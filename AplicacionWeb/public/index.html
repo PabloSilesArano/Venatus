@@ -1207,8 +1207,16 @@
                 menuItems.style.display = menuItems.style.display === "block" ? "none" : "block";
             });
 
+            // Función para cerrar el menú automáticamente
+            function cerrarMenu() {
+                menuItems.style.display = "none";
+            }
+
             // Event listener para el botón de cerrar sesión dentro del menú
-            document.getElementById("logoutSuperAdmin").addEventListener("click", logout);
+            document.getElementById("logoutSuperAdmin").addEventListener("click", function() {
+                cerrarMenu();
+                logout();
+            });
 
             document.getElementById("zoomIn").addEventListener("click", () => window.superAdminMap.zoomIn());
             document.getElementById("zoomOut").addEventListener("click", () => window.superAdminMap.zoomOut());
@@ -1216,6 +1224,7 @@
             document.getElementById("drawPolygon").addEventListener("click", () => {
                 const drawPolygon = new L.Draw.Polygon(window.superAdminMap, drawControl.options.draw.polygon);
                 drawPolygon.enable();
+                cerrarMenu();
             });
 
             document.getElementById("deletePolygon").addEventListener("click", () => {
@@ -1224,6 +1233,7 @@
                 if (userMarker) { window.superAdminMap.removeLayer(userMarker); userMarker = null; }
                 document.getElementById("posicion").style.display = "none";
                 document.getElementById("posicion").textContent = "Posición actual: ---, ---";
+                cerrarMenu();
             });
 
             async function guardarEnFirebird() {
@@ -1250,7 +1260,10 @@
                 }
             }
 
-            document.getElementById("saveToDB").addEventListener("click", guardarEnFirebird);
+            document.getElementById("saveToDB").addEventListener("click", () => {
+                guardarEnFirebird();
+                cerrarMenu();
+            });
 
             async function cargarAreas() {
                 try {
@@ -1283,6 +1296,7 @@
             cargarAreas();
 
             document.getElementById("selectArea").addEventListener("change", async function() {
+                cerrarMenu();
                 const selectedId = this.value;
                 if (!selectedId) {
                     drawnItems.clearLayers();
@@ -1350,6 +1364,7 @@
                 const panel = document.getElementById('registroPanel');
                 panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
                 menuItems.style.display = 'none';
+                cerrarMenu();
             });
 
             document.getElementById('btnRegistrarSocio').addEventListener('click', async function() {
@@ -1407,6 +1422,7 @@
                 const panel = document.getElementById('monitoreoPanel');
                 panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
                 menuItems.style.display = 'none';
+                cerrarMenu();
             });
 
             // Función para actualizar la lista de socios
@@ -1514,6 +1530,7 @@
             // Mostrar panel de administradores
             document.getElementById('gestionarAdmins').addEventListener('click', function() {
                 mostrarPanelAdmin();
+                cerrarMenu();
             });
 
             function mostrarPanelAdmin() {
@@ -1715,6 +1732,7 @@
 
             document.getElementById('modificarCoto').addEventListener('click', function() {
                 mostrarPanelModificacion();
+                cerrarMenu();
             });
 
             function mostrarPanelModificacion() {
@@ -2009,14 +2027,6 @@
                     !menuBtn.contains(event.target) &&
                     !registrarBtn.contains(event.target)) {
                     registroPanel.style.display = 'none';
-                }
-                
-                // Cerrar monitoreo panel si se hace clic fuera
-                if (monitoreoPanel.style.display === 'block' && 
-                    !monitoreoPanel.contains(event.target) && 
-                    !menuBtn.contains(event.target) &&
-                    !monitorearBtn.contains(event.target)) {
-                    monitoreoPanel.style.display = 'none';
                 }
 
                 // Cerrar modificar panel si se hace clic en overlay
