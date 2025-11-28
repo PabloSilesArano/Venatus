@@ -768,9 +768,13 @@
             <div id="mensajeRegistro" style="margin-top: 10px; font-size: 14px;"></div>
         </div>
 
-        <!-- Panel de monitoreo de socios -->
-        <div id="monitoreoPanel">
-            <h3>👥 Monitorear Socios</h3>
+        <!-- En la sección del panel de monitoreo de socios -->
+        <div id="monitoreoPanel" style="display: none;">
+            <!-- Cabecera con título y botón cerrar posicionado arriba a la derecha -->
+            <div style="position: relative; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #2A9DF4; padding-right: 30px;">👥 Monitorear Socios</h3>
+                <button onclick="cerrarPanelMonitoreo()" style="position: absolute; top: -8px; right: 2px; background: none; border: none; font-size: 22px; cursor: pointer; color: #666; padding: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.9); box-shadow: 0 2px 5px rgba(0,0,0,0.2);">×</button>
+            </div>
             
             <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 5px; font-weight: bold;">Coto Seleccionado:</label>
@@ -1070,6 +1074,15 @@
 
         // ========== FUNCIONALIDAD SUPER ADMINISTRADOR ==========
 
+        // Función para cerrar el panel de monitoreo
+        function cerrarPanelMonitoreo() {
+            document.getElementById('monitoreoPanel').style.display = 'none';
+            // Detener el monitoreo si está activo
+            if (typeof detenerMonitoreo === 'function') {
+                detenerMonitoreo();
+            }
+        }
+
         function inicializarSuperAdmin() {
             // Inicializar mapa
             window.superAdminMap = L.map("map").setView([37.8916, -4.7794], 13);
@@ -1212,6 +1225,9 @@
                 menuItems.style.display = "none";
             }
 
+            // Ocultar panel de monitoreo al iniciar
+            document.getElementById('monitoreoPanel').style.display = 'none';
+
             // Event listener para el botón de cerrar sesión dentro del menú
             document.getElementById("logoutSuperAdmin").addEventListener("click", function() {
                 cerrarMenu();
@@ -1346,11 +1362,8 @@
                     cotoSeleccionadoId = selectedId;
                     document.getElementById('cotoActual').textContent = area.nombre;
                     
-                    // Mostrar panel de monitoreo y iniciar automáticamente
-                    document.getElementById('monitoreoPanel').style.display = 'block';
-                    iniciarMonitoreo();
-                    
-                    console.log("✅ Área cargada correctamente");
+                    // Solo actualizar el texto del coto actual, no mostrar el panel
+                    console.log("✅ Área cargada correctamente - Monitoreo listo pero no activo");
                     
                 } catch (err) {
                     console.error("❌ Error cargando área:", err);
