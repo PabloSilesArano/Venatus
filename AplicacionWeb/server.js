@@ -449,6 +449,127 @@ app.put("/admin/estado", async (req, res) => {
     }
 });
 
+// ========== ACTUALIZAR ADMINISTRADOR ==========
+
+app.put("/admin/actualizar", async (req, res) => {
+    const { id, nombre, usuario, email, tipo, idCoto, clave } = req.body;
+    console.log(`✏️ Actualizando administrador ID: ${id}, Tipo: ${tipo}, ID_COTO: ${idCoto}`); // CORREGIDO: tipo en lugar de type
+
+    try {
+        // Validaciones básicas
+        if (!id || !nombre || !usuario || !email || !tipo) {
+            return res.status(400).json({ error: "ID, nombre, usuario, email y tipo son obligatorios" });
+        }
+
+        // Para administradores de coto, validar que tenga coto asignado
+        if (tipo === 'admin') {
+            if (!idCoto) {
+                return res.status(400).json({ error: "El coto es obligatorio para administradores de coto" });
+            }
+            // Asegurarnos de que idCoto sea un número válido
+            if (isNaN(parseInt(idCoto))) {
+                return res.status(400).json({ error: "ID de coto inválido" });
+            }
+        }
+
+        // Verificar si el administrador existe
+        const checkAdminSql = "SELECT ID, TIPO, ID_COTO FROM ADMIN_COTOS WHERE ID = ?";
+        const adminResult = await ejecutarConsulta(checkAdminSql, [id]);
+        
+        if (adminResult.length === 0) {
+            return res.status(404).json({ error: "Administrador no encontrado" });
+        }
+
+        const adminActual = adminResult[0];
+
+        // Verificar si el usuario ya existe (excluyendo el actual)
+        const checkUsuarioSql = "SELECT ID FROM ADMIN_COTOS WHERE USUARIO = ? AND ID != ?";
+        const usuarioResult = await ejecutarConsulta(checkUsuarioSql, [usuario, id]);
+        
+        if (usuarioResult.length > 0) {
+            return res.status(400).json({ error: "El usuario ya está en uso por otro administrador" });
+        }
+
+        // Preparar el valor de ID_COTO según el tipo
+        let idCotoFinal = null;
+        
+        if (tipo === 'admin') {
+            // Para admin de coto, usar el idCoto proporcionado
+            idCotoFinal = parseInt(idCoto);
+            
+            // Verificar que el coto exista
+            const checkCotoSql = "SELECT ID FROM COTOS WHERE ID = ?";
+            const cotoResult = await ejecutarConsulta(checkCotoSql, [idCotoFinal]);
+            
+            if (cotoResult.length === 0) {
+                return res.status(400).json({ error: "El coto especificado no existe" });
+            }
+        } else {
+            // Para superadmin, intentar mantener el valor actual si existe
+            // o establecer un valor por defecto que la base de datos acepte
+            if (adminActual.ID_COTO !== null && adminActual.ID_COTO !== undefined) {
+                idCotoFinal = adminActual.ID_COTO;
+            } else {
+                // Si no hay valor actual, buscar un coto por defecto o usar 0
+                // Esto depende de cómo esté configurada tu base de datos
+                idCotoFinal = 0; // O el valor que acepte tu BD para superadmins
+            }
+        }
+
+        // Preparar datos para actualizar
+        let updateSql = "";
+        let params = [];
+
+        if (clave && clave.length >= 6) {
+            // Actualizar incluyendo contraseña
+            updateSql = `
+                UPDATE ADMIN_COTOS 
+                SET NOMBRE = ?, USUARIO = ?, EMAIL = ?, TIPO = ?, ID_COTO = ?, CLAVE = ? 
+                WHERE ID = ?
+            `;
+            params = [nombre, usuario, email, tipo, idCotoFinal, clave, id];
+        } else {
+            // Actualizar sin cambiar contraseña
+            updateSql = `
+                UPDATE ADMIN_COTOS 
+                SET NOMBRE = ?, USUARIO = ?, EMAIL = ?, TIPO = ?, ID_COTO = ? 
+                WHERE ID = ?
+            `;
+            params = [nombre, usuario, email, tipo, idCotoFinal, id];
+        }
+
+        console.log(`🔧 Ejecutando SQL: ${updateSql}`);
+        console.log(`🔧 Parámetros:`, params);
+
+        // Ejecutar actualización
+        await ejecutarConsulta(updateSql, params);
+
+        console.log(`✅ Administrador ${id} actualizado correctamente`);
+        console.log(`📊 Detalles - Tipo: ${tipo}, ID_COTO: ${idCotoFinal}`);
+        
+        res.json({ 
+            message: "✅ Administrador actualizado correctamente",
+            actualizadoConClave: !!(clave && clave.length >= 6),
+            tipo: tipo,
+            idCoto: idCotoFinal
+        });
+
+    } catch (error) {
+        console.error('❌ Error actualizando administrador:', error);
+        
+        // Log más detallado del error
+        console.error('🔍 Detalles del error:', {
+            mensaje: error.message,
+            stack: error.stack
+        });
+        
+        res.status(500).json({ 
+            error: "Error al actualizar administrador",
+            detalle: error.message
+        });
+    }
+});
+
 // ========== GESTIÓN DE ANIMALES ==========
 
 app.get("/animales", async (req, res) => {

@@ -758,7 +758,10 @@
 
         <!-- Panel de registro de socios -->
         <div id="registroPanel">
-            <h3>Registrar Nuevo Socio</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #2A9DF4;">Registrar Nuevo Socio</h3>
+                <button onclick="cerrarPanelRegistro()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">×</button>
+            </div>
             <input type="text" id="regNombre" placeholder="Nombre completo" maxlength="50">
             <input type="text" id="regUsuario" placeholder="Usuario" maxlength="20">
             <input type="password" id="regContrasena" placeholder="Contraseña" maxlength="20">
@@ -798,10 +801,10 @@
 
         <!-- Panel de Gestión de Administradores -->
         <div id="adminPanel">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0; color: #2A9DF4;">👑 Gestión de Administradores</h3>
-                <button onclick="cerrarPanelAdmin()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">×</button>
-            </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: #2A9DF4;">👑 Gestión de Administradores</h3>
+            <button onclick="cerrarPanelAdmin()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">×</button>
+        </div>
 
             <!-- Formulario para crear nuevo administrador -->
             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
@@ -844,8 +847,8 @@
                     </select>
                 </div>
 
-                <button onclick="crearAdministrador()" style="width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                    ✅ Crear Administrador
+                <button id="btnAccionAdmin" onclick="crearAdministrador()" style="width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    ✅ Añadir Administrador
                 </button>
                 
                 <div id="mensajeAdmin" style="margin-top: 10px; font-size: 12px; text-align: center;"></div>
@@ -988,6 +991,26 @@
         let currentUser = null;
         let userType = null;
 
+        // Función para cerrar el panel de monitoreo
+        function cerrarPanelMonitoreo() {
+            document.getElementById('monitoreoPanel').style.display = 'none';
+            // Detener el monitoreo si está activo
+            if (window.intervaloMonitoreo) {
+                window.detenerMonitoreo();
+            }
+        }
+
+        // Función para cerrar el panel de registro de socios
+        function cerrarPanelRegistro() {
+            document.getElementById('registroPanel').style.display = 'none';
+        }
+
+        // Función para cerrar el panel de administradores
+        function cerrarPanelAdmin() {
+            document.getElementById('adminOverlay').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'none';
+        }
+
         // ========== FUNCIONALIDAD DE LOGIN ==========
 
         async function login() {
@@ -1106,8 +1129,8 @@
             let centrado = false;
 
             // Variables para monitoreo
-            let intervaloMonitoreo = null;
-            let marcadoresSocios = {};
+            window.intervaloMonitoreo = null;
+            window.marcadoresSocios = {};
             let cotoSeleccionadoId = null;
 
             // Variables para administradores
@@ -1501,11 +1524,10 @@
 
             // Controles de monitoreo
             function iniciarMonitoreo() {
-                if (intervaloMonitoreo) {
-                    clearInterval(intervaloMonitoreo);
+                if (window.intervaloMonitoreo) {
+                    clearInterval(window.intervaloMonitoreo);
                 }
-                
-                intervaloMonitoreo = setInterval(actualizarSociosEnCoto, 5000); // Actualizar cada 5 segundos
+                window.intervaloMonitoreo = setInterval(actualizarSociosEnCoto, 5000);
                 document.getElementById('btnIniciarMonitoreo').style.display = 'none';
                 document.getElementById('btnDetenerMonitoreo').style.display = 'block';
                 document.getElementById('estadoMonitoreo').textContent = 'Monitoreo activo - Cargando...';
@@ -1514,7 +1536,7 @@
                 actualizarSociosEnCoto();
             }
 
-            function detenerMonitoreo() {
+            window.detenerMonitoreo = function() {
                 if (intervaloMonitoreo) {
                     clearInterval(intervaloMonitoreo);
                     intervaloMonitoreo = null;
@@ -1547,22 +1569,25 @@
             });
 
             function mostrarPanelAdmin() {
-                // Crear overlay si no existe
-                if (!document.getElementById('adminOverlay')) {
-                    const overlay = document.createElement('div');
-                    overlay.id = 'adminOverlay';
-                    document.getElementById('superAdminScreen').appendChild(overlay);
-                }
-                
-                document.getElementById('adminOverlay').style.display = 'block';
-                document.getElementById('adminPanel').style.display = 'block';
-                menuItems.style.display = 'none';
-                
-                // Cargar lista de cotos para el select
-                cargarCotosParaAdmin();
-                // Cargar administradores existentes
-                cargarAdministradores();
+            // Crear overlay si no existe
+            if (!document.getElementById('adminOverlay')) {
+                const overlay = document.createElement('div');
+                overlay.id = 'adminOverlay';
+                document.getElementById('superAdminScreen').appendChild(overlay);
             }
+            
+            document.getElementById('adminOverlay').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'block';
+            menuItems.style.display = 'none';
+            
+            // Limpiar formulario al abrir el panel
+            cancelarEdicionAdmin();
+            
+            // Cargar lista de cotos para el select
+            cargarCotosParaAdmin();
+            // Cargar administradores existentes
+            cargarAdministradores();
+        }
 
             function cerrarPanelAdmin() {
                 document.getElementById('adminOverlay').style.display = 'none';
@@ -1589,8 +1614,13 @@
                 }
             }
 
-            // Crear nuevo administrador
+            // Función para crear administrador
             async function crearAdministrador() {
+                if (modoEdicionAdmin) {
+                    await actualizarAdministrador(adminEditandoId);
+                    return;
+                }
+
                 const nombre = document.getElementById('adminNombre').value.trim();
                 const usuario = document.getElementById('adminUsuarioPanel').value.trim();
                 const clave = document.getElementById('adminClave').value.trim();
@@ -1635,12 +1665,7 @@
                         mensajeDiv.innerHTML = '<span style="color: green;">✅ ' + data.message + '</span>';
                         
                         // Limpiar formulario
-                        document.getElementById('adminNombre').value = '';
-                        document.getElementById('adminUsuarioPanel').value = '';
-                        document.getElementById('adminClave').value = '';
-                        document.getElementById('adminEmail').value = '';
-                        document.getElementById('adminTipo').value = 'admin';
-                        document.getElementById('adminCoto').value = '';
+                        limpiarFormularioAdmin();
                         
                         // Recargar lista de administradores
                         cargarAdministradores();
@@ -1688,7 +1713,8 @@
                             <h4>${admin.NOMBRE}</h4>
                             <p><strong>Usuario:</strong> ${admin.USUARIO} | <strong>Email:</strong> ${admin.EMAIL || 'No especificado'}</p>
                             <p><strong>Tipo:</strong> ${admin.TIPO === 'superadmin' ? 'Super Administrador' : 'Administrador de Coto'} | 
-                               <strong>Coto:</strong> ${admin.COTO_NOMBRE || 'Todos los cotos'} | 
+                               <p><strong>Coto:</strong> ${admin.COTO_NOMBRE || 'Todos los cotos'} | 
+                               <strong>ID Coto:</strong> ${admin.ID_COTO || 'N/A'} | 
                                <strong>Estado:</strong> 
                                 <span class="${admin.ACTIVO ? 'status-activo' : 'status-inactivo'}">
                                     ${admin.ACTIVO ? 'ACTIVO' : 'INACTIVO'}
@@ -1732,13 +1758,183 @@
                 }
             }
 
-            // Función para editar administrador (placeholder)
+            // Función para editar administrador
             window.editarAdministrador = function(idAdmin) {
                 const admin = listaAdministradores.find(a => a.ID === idAdmin);
                 if (admin) {
-                    // Aquí puedes implementar la edición
-                    alert(`Editar administrador: ${admin.NOMBRE}\n\nEsta funcionalidad está en desarrollo.`);
+                    // Activar modo edición
+                    modoEdicionAdmin = true;
+                    adminEditandoId = idAdmin;
+                    
+                    // Llenar el formulario con los datos del administrador
+                    document.getElementById('adminNombre').value = admin.NOMBRE;
+                    document.getElementById('adminUsuarioPanel').value = admin.USUARIO;
+                    document.getElementById('adminEmail').value = admin.EMAIL || '';
+                    
+                    // Establecer el tipo de administrador
+                    document.getElementById('adminTipo').value = admin.TIPO;
+                    
+                    // Mostrar/ocultar selección de coto según el tipo
+                    const cotoSelection = document.getElementById('cotoSelection');
+                    if (admin.TIPO === 'admin') {
+                        cotoSelection.style.display = 'block';
+                        if (admin.ID_COTO && admin.ID_COTO !== 0) {
+                            document.getElementById('adminCoto').value = admin.ID_COTO;
+                        }
+                    } else {
+                        cotoSelection.style.display = 'none';
+                    }
+                    
+                    // Cambiar el texto del botón a "Actualizar"
+                    const btnAccion = document.getElementById('btnAccionAdmin');
+                    btnAccion.textContent = '🔄 Actualizar Administrador';
+                    btnAccion.style.background = '#ffc107';
+                    btnAccion.style.color = 'black';
+                    
+                    // Crear o mostrar botón cancelar entre el título y la X
+                    let cancelarBtn = document.getElementById('btnCancelarEdicion');
+                    if (!cancelarBtn) {
+                        cancelarBtn = document.createElement('button');
+                        cancelarBtn.id = 'btnCancelarEdicion';
+                        cancelarBtn.textContent = '❌ Cancelar';
+                        cancelarBtn.style.padding = '4px 8px';
+                        cancelarBtn.style.background = '#dc3545';
+                        cancelarBtn.style.color = 'white';
+                        cancelarBtn.style.border = 'none';
+                        cancelarBtn.style.borderRadius = '4px';
+                        cancelarBtn.style.cursor = 'pointer';
+                        cancelarBtn.style.fontSize = '11px';
+                        cancelarBtn.style.margin = '0 10px';
+                        cancelarBtn.onclick = cancelarEdicionAdmin;
+                        
+                        // Insertar entre el título y la X de cerrar
+                        const header = document.querySelector('#adminPanel > div:first-child');
+                        const titulo = header.querySelector('h3');
+                        const botonCerrar = header.querySelector('button[onclick="cerrarPanelAdmin()"]');
+                        
+                        header.insertBefore(cancelarBtn, botonCerrar);
+                    }
+                    
+                    cancelarBtn.style.display = 'block';
+                    
+                    // Limpiar campo de contraseña
+                    document.getElementById('adminClave').value = '';
+                    document.getElementById('adminClave').placeholder = 'Dejar vacío para mantener la actual';
+                    
+                    // Mostrar mensaje informativo
+                    const mensajeDiv = document.getElementById('mensajeAdmin');
+                    mensajeDiv.innerHTML = '<span style="color: #ffc107;">✏️ Editando administrador: ' + admin.NOMBRE + '</span>';
                 }
+            };
+
+            // Función para actualizar administrador
+            async function actualizarAdministrador(idAdmin) {
+                const nombre = document.getElementById('adminNombre').value.trim();
+                const usuario = document.getElementById('adminUsuarioPanel').value.trim();
+                const clave = document.getElementById('adminClave').value.trim();
+                const email = document.getElementById('adminEmail').value.trim();
+                const tipo = document.getElementById('adminTipo').value;
+                const idCoto = document.getElementById('adminCoto').value;
+                const mensajeDiv = document.getElementById('mensajeAdmin');
+
+                // Validaciones básicas
+                if (!nombre || !usuario || !email || !tipo) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ Nombre, usuario, email y tipo son obligatorios</span>';
+                    return;
+                }
+
+                if (tipo === 'admin' && !idCoto) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ Debes seleccionar un coto para administradores de coto</span>';
+                    return;
+                }
+
+                try {
+                    const datosActualizacion = {
+                        id: idAdmin,
+                        nombre: nombre,
+                        usuario: usuario,
+                        email: email,
+                        tipo: tipo,
+                        idCoto: tipo === 'admin' ? parseInt(idCoto) : null
+                    };
+
+                    // Solo incluir la contraseña si se proporcionó una nueva
+                    if (clave && clave.length > 0) {
+                        if (clave.length < 6) {
+                            mensajeDiv.innerHTML = '<span style="color: red;">❌ La contraseña debe tener al menos 6 caracteres</span>';
+                            return;
+                        }
+                        datosActualizacion.clave = clave;
+                    }
+
+                    const response = await fetch('/admin/actualizar', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(datosActualizacion)
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        mensajeDiv.innerHTML = '<span style="color: green;">✅ ' + data.message + '</span>';
+                        
+                        // Restaurar formulario a estado inicial
+                        cancelarEdicionAdmin();
+                        
+                        // Recargar lista de administradores
+                        cargarAdministradores();
+                        
+                        // Ocultar mensaje después de 3 segundos
+                        setTimeout(() => {
+                            mensajeDiv.innerHTML = '';
+                        }, 3000);
+                    } else {
+                        mensajeDiv.innerHTML = '<span style="color: red;">❌ ' + data.error + '</span>';
+                    }
+                } catch (error) {
+                    mensajeDiv.innerHTML = '<span style="color: red;">❌ Error de conexión con el servidor</span>';
+                    console.error('Error:', error);
+                }
+            }
+
+            // Función para cancelar edición
+            function cancelarEdicionAdmin() {
+                // Limpiar formulario
+                limpiarFormularioAdmin();
+                
+                // Restaurar variables de estado
+                modoEdicionAdmin = false;
+                adminEditandoId = null;
+                
+                // Ocultar botón cancelar
+                const cancelarBtn = document.getElementById('btnCancelarEdicion');
+                if (cancelarBtn) {
+                    cancelarBtn.style.display = 'none';
+                }
+                
+                // Limpiar mensaje
+                const mensajeDiv = document.getElementById('mensajeAdmin');
+                mensajeDiv.innerHTML = '';
+            }
+
+            // Función para limpiar el formulario
+            function limpiarFormularioAdmin() {
+                document.getElementById('adminNombre').value = '';
+                document.getElementById('adminUsuarioPanel').value = '';
+                document.getElementById('adminClave').value = '';
+                document.getElementById('adminEmail').value = '';
+                document.getElementById('adminTipo').value = 'admin';
+                document.getElementById('adminCoto').value = '';
+                
+                // Restaurar placeholder de contraseña
+                document.getElementById('adminClave').placeholder = 'Mínimo 6 caracteres';
+                
+                // Restaurar botón a estado "Añadir"
+                const btnAccion = document.getElementById('btnAccionAdmin');
+                btnAccion.textContent = '✅ Añadir Administrador';
+                btnAccion.style.background = '#28a745';
+                btnAccion.style.color = 'white';
+                btnAccion.onclick = crearAdministrador;
             }
 
             // ========== FUNCIONALIDAD DE MODIFICACIÓN DE COTOS ==========

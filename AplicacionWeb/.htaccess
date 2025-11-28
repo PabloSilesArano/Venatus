@@ -1,6 +1,6 @@
 RewriteEngine On
 
-# Redirigir API calls al servidor Node.js (si está en otro puerto)
+# Redirigir API calls al servidor Node.js
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
