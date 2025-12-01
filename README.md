@@ -17,7 +17,7 @@ La empresa receptora tiene derechos de uso según el acuerdo de prácticas, pero
 
 ---
 
-## ✨ Novedades de la Versión 2.0
+## ✨ Novedades del proyecto
 
 ### 🔄 **Modificación Avanzada de Cotos**
 - **Edición visual en tiempo real** de polígonos de caza
@@ -687,30 +687,6 @@ curl -X POST http://localhost:3000/validar-login \
 
 ---
 
-## 📈 Características en Desarrollo
-
-### Próximas Versiones
-
-#### Versión 2.1 (Próxima)
-- ✅ **Notificaciones push** en Android
-- ✅ **Reportes PDF** exportables
-- ✅ **Gráficos de actividad** avanzados
-- ✅ **Sistema de mensajería** interna
-
-#### Versión 2.2 (Planificada)
-- 🔄 **App iOS** nativa
-- 🔄 **Dashboard móvil** para administradores
-- 🔄 **Integración con SIG** (Sistemas de Información Geográfica)
-- 🔄 **API pública** para desarrolladores externos
-
-#### Versión 3.0 (Futuro)
-- ⏳ **Machine Learning** para predicción de movimiento
-- ⏳ **Reconocimiento de imagen** para identificación de especies
-- ⏳ **Blockchain** para registro inmutable de capturas
-- ⏳ **Realidad aumentada** para navegación en campo
-
----
-
 ## 🧪 Testing y Calidad
 
 ### Suite de Pruebas Implementada
@@ -718,34 +694,6 @@ curl -X POST http://localhost:3000/validar-login \
 - **Pruebas de integración** para API endpoints
 - **Pruebas de UI** para flujos principales
 - **Pruebas de rendimiento** para algoritmos de geofencing
-
-### Métricas de Calidad
-- **Cobertura de código**: >80%
-- **Tiempo de respuesta API**: <200ms
-- **Disponibilidad del sistema**: 99.5%
-- **Consumo de memoria**: Optimizado para dispositivos móviles
-
----
-
-## 📚 Documentación Adicional
-
-### Para Desarrolladores
-- [Guía de Contribución](documentation/CONTRIBUTING.md)
-- [Estilo de Código](documentation/CODE_STYLE.md)
-- [Arquitectura Técnica](documentation/TECH_ARCHITECTURE.md)
-- [API Reference](documentation/API_REFERENCE.md)
-
-### Para Administradores del Sistema
-- [Guía de Instalación en Producción](documentation/PRODUCTION_SETUP.md)
-- [Guía de Mantenimiento](documentation/MAINTENANCE_GUIDE.md)
-- [Procedimientos de Backup](documentation/BACKUP_PROCEDURES.md)
-- [Solución de Problemas Avanzada](documentation/TROUBLESHOOTING_ADVANCED.md)
-
-### Para Usuarios Finales
-- [Manual del Socio](documentation/USER_MANUAL_SOCIO.md)
-- [Manual del Administrador](documentation/USER_MANUAL_ADMIN.md)
-- [FAQ](documentation/FAQ.md)
-- [Video Tutoriales](documentation/VIDEO_TUTORIALS.md) (enlace a YouTube)
 
 ---
 
@@ -762,16 +710,6 @@ curl -X POST http://localhost:3000/validar-login \
   Email: enriquepg13@gmail.com  
   LinkedIn: www.linkedin.com/in/epg013
 
-### Contribuidores
-- **Mentor del Proyecto**: [Nombre del Profesor/Tutor]
-- **Testers Beta**: [Lista de testers]
-- **Documentación**: [Colaboradores]
-
-### Agradecimientos Especiales
-- **I.E.S. [Nombre del Centro]** por la oportunidad de desarrollo
-- **Empresa colaboradora** por la recepción en prácticas
-- **Comunidad Open Source** por las herramientas utilizadas
-
 ---
 
 ## 📄 Licencia y Uso
@@ -786,12 +724,6 @@ El código es propiedad intelectual de sus desarrolladores.
 - ⚠️ **Uso comercial**: Requiere autorización expresa
 - ❌ **Redistribución como propio**: Prohibido
 - ❌ **Venta del código**: Estrictamente prohibido
-
-### Solicitud de Licencia Comercial
-Para uso comercial o empresarial, contactar con:
-**Oficina de Licencias Venatus**  
-Email: licencias@venatus-project.com  
-Teléfono: [+34 XXX XXX XXX]
 
 ---
 
@@ -814,31 +746,5 @@ Teléfono: [+34 XXX XXX XXX]
 - **Monitoreo de equipos de campo** en agricultura
 - **Control de acceso** a áreas restringidas
 - **Seguimiento logístico** en grandes extensiones
-
----
-
-## 📞 Soporte y Contacto
-
-### Canales de Soporte
-- **Foro de la Comunidad**: [forum.venatus-project.com]
-- **Soporte por Email**: soporte@venatus-project.com
-- **Telegram para desarrolladores**: [t.me/venatus_dev]
-
-### Reporte de Bugs y Sugerencias
-- **GitHub Issues**: [github.com/venatus-project/issues]
-- **Formulario web**: [venatus-project.com/feedback]
-- **Email directo**: bugs@venatus-project.com
-
----
-
-## 🔮 Visión a Futuro
-
-**Venatus** aspira a convertirse en la **plataforma estándar** para la gestión inteligente de espacios naturales y de caza controlada. Nuestra visión incluye:
-
-1. **Ecosistema completo** de aplicaciones móviles y web
-2. **Integración con dispositivos IoT** para monitoreo automático
-3. **Plataforma de datos abiertos** para investigación científica
-4. **Comunidad global** de administradores y usuarios
-5. **Certificaciones oficiales** para gestión cinegética sostenible
 
 ---
