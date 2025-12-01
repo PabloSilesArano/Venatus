@@ -762,11 +762,15 @@
                 <h3 style="margin: 0; color: #2A9DF4;">Registrar Nuevo Socio</h3>
                 <button onclick="cerrarPanelRegistro()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">×</button>
             </div>
+            
+            <!-- Campos existentes + DNI -->
             <input type="text" id="regNombre" placeholder="Nombre completo" maxlength="50">
+            <input type="text" id="regDNI" placeholder="DNI (documento de identidad)" maxlength="20"> <!-- NUEVO CAMPO -->
             <input type="text" id="regUsuario" placeholder="Usuario" maxlength="20">
             <input type="password" id="regContrasena" placeholder="Contraseña" maxlength="20">
             <input type="email" id="regEmail" placeholder="Email" maxlength="100">
             <input type="text" id="regTelefono" placeholder="Teléfono (9 dígitos)" maxlength="9">
+            
             <button id="btnRegistrarSocio">Registrar Socio</button>
             <div id="mensajeRegistro" style="margin-top: 10px; font-size: 14px;"></div>
         </div>
@@ -1403,8 +1407,10 @@
                 cerrarMenu();
             });
 
+            // En la función de registro de socios, actualizar:
             document.getElementById('btnRegistrarSocio').addEventListener('click', async function() {
                 const nombre = document.getElementById('regNombre').value.trim();
+                const dni = document.getElementById('regDNI').value.trim(); // NUEVA VARIABLE
                 const usuario = document.getElementById('regUsuario').value.trim();
                 const contrasena = document.getElementById('regContrasena').value.trim();
                 const email = document.getElementById('regEmail').value.trim();
@@ -1412,7 +1418,8 @@
 
                 const mensajeDiv = document.getElementById('mensajeRegistro');
 
-                if (!nombre || !usuario || !contrasena || !email || !telefono) {
+                // Validaciones - Incluir DNI
+                if (!nombre || !dni || !usuario || !contrasena || !email || !telefono) {
                     mensajeDiv.innerHTML = '<span style="color: red;">Todos los campos son obligatorios</span>';
                     return;
                 }
@@ -1426,14 +1433,24 @@
                     const respuesta = await fetch('/registrar-socio', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ nombre, usuario, contrasena, email, telefono })
+                        body: JSON.stringify({ 
+                            nombre, 
+                            dni,  // AÑADIR DNI
+                            usuario, 
+                            contrasena, 
+                            email, 
+                            telefono 
+                        })
                     });
 
                     const data = await respuesta.json();
 
                     if (respuesta.ok) {
                         mensajeDiv.innerHTML = '<span style="color: green;">✅ ' + data.mensaje + '</span>';
+                        
+                        // Limpiar todos los campos
                         document.getElementById('regNombre').value = '';
+                        document.getElementById('regDNI').value = ''; // LIMPIAR DNI
                         document.getElementById('regUsuario').value = '';
                         document.getElementById('regContrasena').value = '';
                         document.getElementById('regEmail').value = '';
@@ -1490,14 +1507,10 @@
             function actualizarListaSocios(socios) {
                 const listaDiv = document.getElementById('listaSocios');
                 
-                if (socios.length === 0) {
-                    listaDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 10px;">No hay socios en el coto</div>';
-                    return;
-                }
-                
                 listaDiv.innerHTML = socios.map(socio => `
                     <div style="padding: 8px; border-bottom: 1px solid #eee; margin-bottom: 5px;">
                         <strong>${socio.nombre}</strong><br>
+                        <small>📄 DNI: ${socio.dni || 'No disponible'}</small><br>
                         <small>📍 ${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}</small><br>
                         <small style="color: #28a745;">✅ En el coto</small>
                     </div>

@@ -237,34 +237,38 @@ app.post("/validar-login", async (req, res) => {
 // ========== GESTIÓN DE SOCIOS ==========
 
 app.post("/registrar-socio", async (req, res) => {
-    let { nombre, usuario, contrasena, email, telefono } = req.body;
+    let { nombre, dni, usuario, contrasena, email, telefono } = req.body;
 
     // Limitar longitud de campos
     usuario = usuario.substring(0, 20);
     nombre = nombre.substring(0, 50);
+    dni = dni.substring(0, 20); // NUEVO: Limitar DNI
     contrasena = contrasena.substring(0, 20);
     email = email.substring(0, 100);
     telefono = telefono.substring(0, 20);
 
-    if (!nombre || !usuario || !contrasena || !email || !telefono) {
+    // Validar campos obligatorios incluyendo DNI
+    if (!nombre || !dni || !usuario || !contrasena || !email || !telefono) {
         return res.status(400).json({ error: "Todos los campos son obligatorios" });
     }
 
     try {
-        const checkSql = "SELECT FIRST 1 ID FROM SOCIOS WHERE USUARIO = ? OR EMAIL = ?";
-        const checkResult = await ejecutarConsulta(checkSql, [usuario, email]);
+        // Verificar si usuario, email o DNI ya existen
+        const checkSql = "SELECT FIRST 1 ID FROM SOCIOS WHERE USUARIO = ? OR EMAIL = ? OR DNI = ?";
+        const checkResult = await ejecutarConsulta(checkSql, [usuario, email, dni]);
 
         if (checkResult.length > 0) {
-            return res.status(400).json({ error: "El usuario o email ya existen" });
+            return res.status(400).json({ error: "El usuario, email o DNI ya existen" });
         }
 
+        // Insertar socio con DNI
         const insertSql = `
-            INSERT INTO SOCIOS (NOMBRE, TELEFONO, USUARIO, CLAVE, EMAIL, POSICION_X, POSICION_Y) 
-            VALUES (?, ?, ?, ?, ?, NULL, NULL)
+            INSERT INTO SOCIOS (NOMBRE, DNI, TELEFONO, USUARIO, CLAVE, EMAIL, POSICION_X, POSICION_Y) 
+            VALUES (?, ?, ?, ?, ?, ?, NULL, NULL)
         `;
 
-        await ejecutarConsulta(insertSql, [nombre, telefono, usuario, contrasena, email]);
-        console.log("✅ Socio registrado correctamente:", usuario);
+        await ejecutarConsulta(insertSql, [nombre, dni, telefono, usuario, contrasena, email]);
+        console.log("✅ Socio registrado correctamente:", usuario, "DNI:", dni);
         res.json({ mensaje: "✅ Socio registrado correctamente" });
     } catch (error) {
         console.error('❌ Error registrando socio:', error);
