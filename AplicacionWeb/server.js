@@ -8,7 +8,13 @@ const app = express();
 
 // ========== CONFIGURACIÓN ==========
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: [
+        'http://localhost:3000', 
+        'http://127.0.0.1:3000',
+        'http://51.210.98.37:3000',
+        'http://venatus.es:3000',    
+        'http://venatus.es'          
+    ],
     credentials: true
 }));
 
@@ -17,9 +23,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Configuración de la base de datos LOCAL
 const dbOptions = {
-    host: "localhost",
+    host: "51.210.98.37",
     port: 3050,
-    database: "C:\\datos\\VENATUS.FDB",
+    database: "C:\\venatus\\VENATUS.FDB",
     user: "SYSDBA",
     password: "masterkey",
     lowercase_keys: false,
@@ -235,7 +241,7 @@ app.post("/validar-login", async (req, res) => {
 });
 
 // ========== GESTIÓN DE SOCIOS ==========
-
+    
 app.post("/registrar-socio", async (req, res) => {
     let { nombre, dni, usuario, contrasena, email, telefono } = req.body;
 
@@ -994,9 +1000,10 @@ app.post("/inicializar-datos", async (req, res) => {
 // ========== INICIALIZACIÓN DEL SERVIDOR ==========
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, 'localhost', () => {
+app.listen(PORT, '0.0.0.0', () => { 
     console.log("🚀 Servidor ejecutándose en:");
-    console.log(`   http://localhost:${PORT}`);
-    console.log("✅ Sistema de administración Venatus - DESARROLLO LOCAL");
-    console.log("📊 Base de datos local: C:\\datos\\VENATUS.FDB");
+    console.log(`   http://51.210.98.37:${PORT}`);
+    console.log(`   http://venatus.es:${PORT}`);
+    console.log("✅ Sistema de administración Venatus - PRODUCCIÓN REMOTA");
+    console.log("📊 Base de datos remota: 51.210.98.37/C:\\venatus\\VENATUS.FDB");
 });
