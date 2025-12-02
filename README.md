@@ -2,18 +2,7 @@
 
 ## Descripción del Proyecto
 
-**Venatus** es una solución completa desarrollada como proyecto de prácticas para el **Grado Superior en Desarrollo de Aplicaciones Multiplataforma**.  
-El sistema permite la **gestión integral** de cotos de caza, incluyendo monitoreo en tiempo real, registro de capturas y administración de especies mediante una **aplicación Android nativa** y un **panel web administrativo avanzado**.
-
----
-
-### 🚨 Aviso Importante sobre Propiedad Intelectual
-
-Este proyecto fue **desarrollado íntegramente por estudiantes** como parte de sus prácticas formativas.  
-El código fuente, diseño y arquitectura son **propiedad intelectual de los desarrolladores**.  
-La empresa receptora tiene derechos de uso según el acuerdo de prácticas, pero la propiedad del código y las soluciones técnicas implementadas permanecen con los creadores originales.
-
-**⚠️ ADVERTENCIA: Cualquier uso comercial o redistribución sin autorización expresa constituye una violación de derechos de autor.**
+**Venatus** es una solución completa desarrollada para la **gestión integral** de cotos de caza, incluyendo monitoreo en tiempo real, registro de capturas y administración de especies mediante una **aplicación Android nativa** y un **panel web administrativo avanzado**.
 
 ---
 
@@ -697,36 +686,6 @@ curl -X POST http://localhost:3000/validar-login \
 
 ---
 
-## 👥 Equipo de Desarrollo
-
-### Desarrolladores Principales
-- **Pablo Nicolás Siles Arano**  
-  *Backend & Android Development*  
-  Email: pablonsiles@gmail.com  
-  LinkedIn: www.linkedin.com/in/pablosles003
-
-- **Enrique Pérez González**  
-  *Frontend Web & Database Design*  
-  Email: enriquepg13@gmail.com  
-  LinkedIn: www.linkedin.com/in/epg013
-
----
-
-## 📄 Licencia y Uso
-
-### Condiciones de Uso
-Este proyecto se comparte con fines **educativos, de portfolio y de investigación**.  
-El código es propiedad intelectual de sus desarrolladores.
-
-### Derechos Reservados
-- ✅ **Uso educativo**: Permitido con atribución
-- ✅ **Modificación para aprendizaje**: Permitido
-- ⚠️ **Uso comercial**: Requiere autorización expresa
-- ❌ **Redistribución como propio**: Prohibido
-- ❌ **Venta del código**: Estrictamente prohibido
-
----
-
 ## 🌟 Características Únicas del Proyecto
 
 ### Innovaciones Técnicas
@@ -746,5 +705,3 @@ El código es propiedad intelectual de sus desarrolladores.
 - **Monitoreo de equipos de campo** en agricultura
 - **Control de acceso** a áreas restringidas
 - **Seguimiento logístico** en grandes extensiones
-
----
