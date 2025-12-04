@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
         .retryOnConnectionFailure(true)
         .build()
 
-    private val SERVER_URL = "http://192.168.1.64:3000"
+    private val SERVER_URL = "http://51.210.98.37:3000"
 
     // ========== MANEJO DE UBICACIÓN ==========
     private val ubicacionUpdateHandler = Handler(Looper.getMainLooper())

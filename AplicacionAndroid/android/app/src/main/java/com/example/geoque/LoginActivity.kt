@@ -68,7 +68,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun validarCredenciales(usuario: String, contrasena: String) {
-        val url = "http://192.168.1.64:3000/validar-login"
+        val url = "http://51.210.98.37:3000/validar-login"
 
         val json = JSONObject().apply {
             put("usuario", usuario)
