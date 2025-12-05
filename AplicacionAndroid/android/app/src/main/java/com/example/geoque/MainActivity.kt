@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
     private val ubicacionUpdateHandler = Handler(Looper.getMainLooper())
     private val enviarUbicacionRunnable = object : Runnable {
         override fun run() {
-            ultimaUbicacion?.let { location ->
+            ultimaUbicacion?.let { location ->0
                 enviarUbicacionAlServidor(location)
             }
             ubicacionUpdateHandler.postDelayed(this, 10000) // Enviar cada 10 segundos

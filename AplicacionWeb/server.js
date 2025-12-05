@@ -13,7 +13,6 @@ app.use(cors({
         'http://127.0.0.1:3000',
         'http://51.210.98.37:3000',
         'http://venatus.es:3000',    
-        'http://venatus.es'          
     ],
     credentials: true
 }));
@@ -355,6 +354,255 @@ app.post("/guardar", async (req, res) => {
     } catch (error) {
         console.error('❌ Error guardando área:', error);
         res.status(500).json({ error: "Error al guardar en la base de datos" });
+    }
+});
+
+// ========== GESTIÓN DE PERROS DE CAZA ==========
+
+// Obtener todos los perros
+app.get("/perros", async (req, res) => {
+    try {
+        const sql = "SELECT ID, NOMBRE, IDENTIFICADOR, POS_X, POS_Y FROM PERROS WHERE ACTIVO = 1 ORDER BY NOMBRE";
+        const result = await ejecutarConsulta(sql);
+        res.json(result);
+    } catch (error) {
+        console.error('❌ Error obteniendo perros:', error);
+        res.status(500).json({ error: "Error al obtener perros de caza" });
+    }
+});
+
+// Obtener perros por coto
+app.get("/cotos/:id/perros", async (req, res) => {
+    const cotoId = req.params.id;
+    console.log(`🐕 Solicitando perros para coto: ${cotoId}`);
+
+    try {
+        const sql = `
+            SELECT p.ID, p.NOMBRE, p.IDENTIFICADOR, p.POS_X, p.POS_Y 
+            FROM PERROS p
+            INNER JOIN COTO_PERROS cp ON p.ID = cp.ID_PERRO
+            WHERE cp.ID_COTO = ? AND p.ACTIVO = 1
+            ORDER BY p.NOMBRE
+        `;
+        
+        const result = await ejecutarConsulta(sql, [cotoId]);
+        console.log(`✅ Perros encontrados para coto ${cotoId}: ${result.length}`);
+        res.json(result);
+    } catch (error) {
+        console.error('❌ Error obteniendo perros del coto:', error);
+        res.status(500).json({ error: "Error al obtener perros del coto" });
+    }
+});
+
+// Crear nuevo perro
+app.post("/perros", async (req, res) => {
+    const { nombre, identificador, pos_x, pos_y, idCoto } = req.body;
+    console.log(`🐕 Creando perro: ${nombre} - Identificador: ${identificador}`);
+
+    if (!nombre || !identificador) {
+        return res.status(400).json({ error: "Nombre e identificador son obligatorios" });
+    }
+
+    try {
+        // Verificar si identificador ya existe
+        const checkSql = "SELECT FIRST 1 ID FROM PERROS WHERE IDENTIFICADOR = ?";
+        const checkResult = await ejecutarConsulta(checkSql, [identificador]);
+        
+        if (checkResult.length > 0) {
+            return res.status(400).json({ error: "El identificador ya existe" });
+        }
+
+        // Insertar perro
+        const insertSql = `
+            INSERT INTO PERROS (NOMBRE, IDENTIFICADOR, POS_X, POS_Y, ACTIVO) 
+            VALUES (?, ?, ?, ?, 1)
+        `;
+
+        await ejecutarConsulta(insertSql, [
+            nombre.substring(0, 30),
+            identificador.substring(0, 50),
+            pos_x || null,
+            pos_y || null
+        ]);
+
+        // Obtener el ID del perro recién creado
+        const getLastIdSql = "SELECT FIRST 1 ID FROM PERROS WHERE IDENTIFICADOR = ?";
+        const lastIdResult = await ejecutarConsulta(getLastIdSql, [identificador]);
+        const perroId = lastIdResult[0].ID;
+
+        // Si se proporcionó un coto, asignar el perro al coto
+        if (idCoto) {
+            try {
+                const asignarSql = `
+                    INSERT INTO COTO_PERROS (ID_COTO, ID_PERRO) 
+                    VALUES (?, ?)
+                `;
+                await ejecutarConsulta(asignarSql, [idCoto, perroId]);
+                console.log(`✅ Perro asignado al coto ${idCoto}`);
+            } catch (error) {
+                console.warn('⚠️ No se pudo asignar el perro al coto:', error.message);
+            }
+        }
+
+        console.log(`✅ Perro creado correctamente: ${nombre}`);
+        res.json({ 
+            success: true, 
+            message: "✅ Perro de caza creado correctamente",
+            id: perroId
+        });
+    } catch (error) {
+        console.error('❌ Error creando perro:', error);
+        res.status(500).json({ error: "Error al crear perro de caza" });
+    }
+});
+
+// Actualizar perro
+app.put("/perros/:id", async (req, res) => {
+    const perroId = req.params.id;
+    const { nombre, identificador, pos_x, pos_y, idCoto } = req.body;
+    console.log(`✏️ Actualizando perro ID: ${perroId}`);
+
+    try {
+        // Verificar si el perro existe
+        const checkSql = "SELECT ID FROM PERROS WHERE ID = ?";
+        const checkResult = await ejecutarConsulta(checkSql, [perroId]);
+        
+        if (checkResult.length === 0) {
+            return res.status(404).json({ error: "Perro no encontrado" });
+        }
+
+        // Verificar si el nuevo identificador ya existe (excluyendo el actual)
+        if (identificador) {
+            const checkIdentificadorSql = "SELECT ID FROM PERROS WHERE IDENTIFICADOR = ? AND ID != ?";
+            const idResult = await ejecutarConsulta(checkIdentificadorSql, [identificador, perroId]);
+            
+            if (idResult.length > 0) {
+                return res.status(400).json({ error: "El identificador ya está en uso" });
+            }
+        }
+
+        // Actualizar perro
+        const updateSql = `
+            UPDATE PERROS 
+            SET NOMBRE = ?, IDENTIFICADOR = ?, POS_X = ?, POS_Y = ? 
+            WHERE ID = ?
+        `;
+
+        await ejecutarConsulta(updateSql, [
+            nombre ? nombre.substring(0, 30) : null,
+            identificador ? identificador.substring(0, 50) : null,
+            pos_x || null,
+            pos_y || null,
+            perroId
+        ]);
+
+        // Si se proporcionó un coto, actualizar asignación
+        if (idCoto !== undefined) {
+            try {
+                // Eliminar asignaciones anteriores
+                const deleteAsignacionSql = "DELETE FROM COTO_PERROS WHERE ID_PERRO = ?";
+                await ejecutarConsulta(deleteAsignacionSql, [perroId]);
+
+                // Si idCoto no es null, crear nueva asignación
+                if (idCoto) {
+                    const asignarSql = "INSERT INTO COTO_PERROS (ID_COTO, ID_PERRO) VALUES (?, ?)";
+                    await ejecutarConsulta(asignarSql, [idCoto, perroId]);
+                    console.log(`✅ Perro reasignado al coto ${idCoto}`);
+                } else {
+                    console.log(`✅ Perro desasignado de todos los cotos`);
+                }
+            } catch (error) {
+                console.warn('⚠️ No se pudo actualizar asignación del perro:', error.message);
+            }
+        }
+
+        console.log(`✅ Perro ${perroId} actualizado correctamente`);
+        res.json({ 
+            success: true, 
+            message: "✅ Perro de caza actualizado correctamente"
+        });
+    } catch (error) {
+        console.error('❌ Error actualizando perro:', error);
+        res.status(500).json({ error: "Error al actualizar perro de caza" });
+    }
+});
+
+// Cambiar estado de perro (activar/desactivar)
+app.put("/perros/:id/estado", async (req, res) => {
+    const perroId = req.params.id;
+    const { activo } = req.body;
+    console.log(`🔄 Cambiando estado perro ID: ${perroId} a ${activo ? 'ACTIVO' : 'INACTIVO'}`);
+
+    try {
+        const sql = "UPDATE PERROS SET ACTIVO = ? WHERE ID = ?";
+        await ejecutarConsulta(sql, [activo, perroId]);
+        console.log(`✅ Estado de perro ${perroId} actualizado a: ${activo}`);
+        res.json({ message: "Estado actualizado correctamente" });
+    } catch (error) {
+        console.error('❌ Error actualizando estado del perro:', error);
+        res.status(500).json({ error: "Error al actualizar estado del perro" });
+    }
+});
+
+// Asignar perros a coto
+app.post("/cotos/:id/asignar-perros", async (req, res) => {
+    const cotoId = req.params.id;
+    const { perros } = req.body;
+    console.log(`🔗 Asignando perros al coto ${cotoId}:`, perros);
+
+    try {
+        // Eliminar asignaciones anteriores
+        await ejecutarConsulta("DELETE FROM COTO_PERROS WHERE ID_COTO = ?", [cotoId]);
+
+        // Crear nuevas asignaciones
+        for (const perroId of perros) {
+            await ejecutarConsulta(
+                "INSERT INTO COTO_PERROS (ID_COTO, ID_PERRO) VALUES (?, ?)",
+                [cotoId, perroId]
+            );
+        }
+
+        res.json({ 
+            success: true, 
+            message: "✅ Perros asignados al coto correctamente",
+            total: perros.length
+        });
+    } catch (error) {
+        console.error('❌ Error asignando perros:', error);
+        res.status(500).json({ error: "Error asignando perros al coto: " + error.message });
+    }
+});
+
+// Obtener ubicaciones de perros en tiempo real
+app.get("/perros/ubicaciones", async (req, res) => {
+    try {
+        const sql = `
+            SELECT p.ID, p.NOMBRE, p.IDENTIFICADOR, p.POS_X, p.POS_Y, 
+                   cp.ID_COTO, c.NOMBRE as COTO_NOMBRE
+            FROM PERROS p
+            LEFT JOIN COTO_PERROS cp ON p.ID = cp.ID_PERRO
+            LEFT JOIN COTOS c ON cp.ID_COTO = c.ID
+            WHERE p.ACTIVO = 1 AND p.POS_X IS NOT NULL AND p.POS_Y IS NOT NULL
+        `;
+        
+        const result = await ejecutarConsulta(sql);
+        
+        const ubicaciones = result.map(perro => ({
+            id: perro.ID,
+            nombre: perro.NOMBRE,
+            identificador: perro.IDENTIFICADOR,
+            lat: perro.POS_Y,
+            lng: perro.POS_X,
+            cotoId: perro.ID_COTO,
+            cotoNombre: perro.COTO_NOMBRE || 'Sin asignar',
+            timestamp: new Date().toISOString()
+        }));
+
+        console.log(`📍 ${ubicaciones.length} perros con ubicación disponible`);
+        res.json(ubicaciones);
+    } catch (error) {
+        console.error('❌ Error obteniendo ubicaciones de perros:', error);
+        res.status(500).json({ error: "Error al obtener ubicaciones de perros" });
     }
 });
 
@@ -873,7 +1121,9 @@ app.post("/inicializar-datos", async (req, res) => {
         const generators = [
             "CREATE GENERATOR GEN_ANIMALES_ID",
             "CREATE GENERATOR GEN_COTO_ANIMALES_ID", 
-            "CREATE GENERATOR GEN_CAPTURAS_ID"
+            "CREATE GENERATOR GEN_CAPTURAS_ID",
+            "CREATE GENERATOR GEN_PERROS_ID",
+            "CREATE GENERATOR GEN_COTO_PERROS_ID"
         ];
 
         for (const genSql of generators) {
@@ -887,6 +1137,42 @@ app.post("/inicializar-datos", async (req, res) => {
 
         // Crear tablas
         const tablas = [
+
+            {
+                nombre: "PERROS",
+                sql: `CREATE TABLE PERROS (
+                    ID INTEGER NOT NULL PRIMARY KEY,
+                    NOMBRE VARCHAR(30) NOT NULL,
+                    IDENTIFICADOR VARCHAR(50) NOT NULL UNIQUE,
+                    POS_X DOUBLE PRECISION,
+                    POS_Y DOUBLE PRECISION,
+                    ACTIVO INTEGER DEFAULT 1
+                )`,
+                trigger: `CREATE TRIGGER PERROS_BI FOR PERROS
+                    ACTIVE BEFORE INSERT POSITION 0
+                    AS
+                    BEGIN
+                    IF (NEW.ID IS NULL) THEN
+                        NEW.ID = GEN_ID(GEN_PERROS_ID, 1);
+                    END`
+            },
+            {
+                nombre: "COTO_PERROS",
+                sql: `CREATE TABLE COTO_PERROS (
+                    ID INTEGER NOT NULL PRIMARY KEY,
+                    ID_COTO INTEGER NOT NULL,
+                    ID_PERRO INTEGER NOT NULL,
+                    FOREIGN KEY (ID_COTO) REFERENCES COTOS(ID),
+                    FOREIGN KEY (ID_PERRO) REFERENCES PERROS(ID)
+                )`,
+                trigger: `CREATE TRIGGER COTO_PERROS_BI FOR COTO_PERROS
+                    ACTIVE BEFORE INSERT POSITION 0
+                    AS
+                    BEGIN
+                    IF (NEW.ID IS NULL) THEN
+                        NEW.ID = GEN_ID(GEN_COTO_PERROS_ID, 1);
+                    END`
+            },
             {
                 nombre: "ANIMALES",
                 sql: `CREATE TABLE ANIMALES (

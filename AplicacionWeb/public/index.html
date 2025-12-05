@@ -166,6 +166,151 @@
             text-align: center;
         }
 
+        /* Panel de gestión de perros */
+        #perrosPanel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.98);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            z-index: 1001;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .perro-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .perro-info h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+
+        .perro-info p {
+            margin: 2px 0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .perro-ubicacion {
+            font-size: 11px;
+            color: #2A9DF4;
+            background: #e8f4fe;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .perro-actions button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+
+        .btn-asignar {
+            background: #2A9DF4;
+            color: white;
+        }
+
+        .btn-ubicacion {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-editar-perro {
+            background: #ffc107;
+            color: black;
+        }
+
+        .btn-eliminar-perro {
+            background: #dc3545;
+            color: white;
+        }
+
+        .status-activo {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .status-inactivo {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        /* Formulario de perros */
+        .perro-form {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .perro-form input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .coordenadas-input {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        #listaPerros {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        /* Panel de monitoreo de perros */
+        #monitoreoPerrosPanel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            width: 350px;
+            max-height: 500px;
+            display: none;
+            overflow-y: auto;
+        }
+
+        .perro-monitoreo-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 5px;
+        }
+
+        .perro-marcador {
+            background: #ff6b35 !important;
+            border: 2px solid #fff !important;
+        }
+
         /* Indicador de modo edición */
         #modoEdicion {
             position: absolute;
@@ -748,13 +893,112 @@
     <!-- Pantalla Super Administrador -->
     <div id="superAdminScreen">
         
-        <div id="info">Dibuja un polígono para marcar el coto</div>
+        <div id="info"></div>
         <div id="posicion">Posición actual: ---, ---</div>
         <div id="modoEdicion">✏️ MODO EDICIÓN - Puedes modificar el coto en el mapa</div>
         <div id="map"></div>
 
         <!-- Botón Finalizar Edición -->
         <button id="btnFinalizarEdicion">✅ Finalizar Edición</button>
+
+        <!-- Panel de Gestión de Perros -->
+        <div id="perrosPanel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #2A9DF4;">🐕 Gestión de Perros de Caza</h3>
+                <button onclick="cerrarPanelPerros()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">×</button>
+            </div>
+
+            <!-- Formulario para crear/editar perro -->
+            <div class="perro-form">
+                <h4 style="margin-top: 0; color: #333;" id="tituloFormPerro">➕ Nuevo Perro de Caza</h4>
+                
+                <input type="text" id="perroNombre" placeholder="Nombre del perro (máx 30 caracteres)" maxlength="30">
+                <input type="text" id="perroIdentificador" placeholder="Identificador único (máx 50 caracteres)" maxlength="50">
+                
+                <div style="margin: 10px 0;">
+                    <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Coto Asignado (opcional)</label>
+                    <select id="perroCoto" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">-- Sin asignar --</option>
+                    </select>
+                </div>
+                
+                <div style="margin: 10px 0;">
+                    <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Ubicación Inicial (opcional)</label>
+                    <div class="coordenadas-input">
+                        <input type="number" id="perroPosX" placeholder="Coordenada X (longitud)" step="any">
+                        <input type="number" id="perroPosY" placeholder="Coordenada Y (latitud)" step="any">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button onclick="usarUbicacionActualPerro()" style="flex: 1; padding: 8px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            📍 Usar mi ubicación
+                        </button>
+                        <button onclick="limpiarCoordenadasPerro()" style="flex: 1; padding: 8px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            🗑️ Limpiar
+                        </button>
+                    </div>
+                </div>
+
+                <button id="btnAccionPerro" onclick="guardarPerro()" style="width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    ✅ Registrar Perro
+                </button>
+                
+                <div id="mensajePerro" style="margin-top: 10px; font-size: 12px; text-align: center;"></div>
+            </div>
+
+            <!-- Lista de perros existentes -->
+            <div>
+                <h4 style="margin-bottom: 10px; color: #333;">📋 Perros Registrados</h4>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button onclick="cargarPerros()" style="flex: 1; padding: 8px; background: #2A9DF4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        🔄 Actualizar Lista
+                    </button>
+                    <button onclick="iniciarMonitoreoPerros()" style="flex: 1; padding: 8px; background: #ff6b35; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        🎯 Monitorear Perros
+                    </button>
+                </div>
+                
+                <div id="listaPerros" style="max-height: 300px; overflow-y: auto; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px;">
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        Cargando perros...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de Monitoreo de Perros -->
+        <div id="monitoreoPerrosPanel">
+            <div style="position: relative; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #ff6b35; padding-right: 30px;">🐕 Monitoreo de Perros</h3>
+                <button onclick="cerrarMonitoreoPerros()" style="position: absolute; top: -8px; right: 2px; background: none; border: none; font-size: 22px; cursor: pointer; color: #666; padding: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.9); box-shadow: 0 2px 5px rgba(0,0,0,0.2);">×</button>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Estado:</label>
+                <div id="estadoMonitoreoPerros" style="background: #f5f5f5; padding: 8px; border-radius: 6px; font-size: 14px;">
+                    Monitoreo inactivo
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button onclick="iniciarMonitoreoPerros()" style="flex: 1; padding: 10px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                    ▶️ Iniciar
+                </button>
+                <button onclick="detenerMonitoreoPerros()" style="flex: 1; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; display: none;">
+                    ⏹️ Detener
+                </button>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px;">Perros Activos:</h4>
+                <div id="listaPerrosMonitoreo">
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        No hay perros en monitoreo
+                    </div>
+                </div>
+            </div>
+            
+            <div id="contadorPerros" style="margin-top: 10px; font-size: 12px; text-align: center; color: #666;"></div>
+        </div>
 
         <!-- Panel de registro de socios -->
         <div id="registroPanel">
@@ -919,6 +1163,8 @@
                 <!-- NUEVA OPCIÓN PARA MODIFICAR COTOS -->
                 <div class="menu-separator"></div>
                 <button id="modificarCoto">✏️ Modificar Coto</button>
+
+                <button id="gestionarPerros">🐕 Gestionar Perros</button>
                 
                 <!-- Gestión de administradores -->
                 <div class="menu-separator"></div>
@@ -2262,6 +2508,514 @@
             window.superAdminMap.zoomControl.remove();
         }
 
+        // ========== FUNCIONALIDAD DE GESTIÓN DE PERROS ==========
+
+        // Variables globales para perros
+        let listaPerros = [];
+        let marcadoresPerros = new Map();
+        let intervaloMonitoreoPerros = null;
+        let modoEdicionPerro = false;
+        let perroEditandoId = null;
+
+        // Mostrar panel de perros
+        document.getElementById('gestionarPerros').addEventListener('click', function() {
+            mostrarPanelPerros();
+            cerrarMenu();
+        });
+
+        function mostrarPanelPerros() {
+            // Crear overlay si no existe
+            if (!document.getElementById('adminOverlay')) {
+                const overlay = document.createElement('div');
+                overlay.id = 'adminOverlay';
+                document.getElementById('superAdminScreen').appendChild(overlay);
+            }
+            
+            document.getElementById('adminOverlay').style.display = 'block';
+            document.getElementById('perrosPanel').style.display = 'block';
+            menuItems.style.display = 'none';
+            
+            // Limpiar formulario al abrir el panel
+            cancelarEdicionPerro();
+            
+            // Cargar lista de cotos para el select
+            cargarCotosParaPerros();
+            // Cargar perros existentes
+            cargarPerros();
+        }
+
+        function cerrarPanelPerros() {
+            document.getElementById('adminOverlay').style.display = 'none';
+            document.getElementById('perrosPanel').style.display = 'none';
+        }
+
+        // Cargar cotos para el select de perros
+        async function cargarCotosParaPerros() {
+            try {
+                const response = await fetch('/areas');
+                const areas = await response.json();
+                
+                const select = document.getElementById('perroCoto');
+                select.innerHTML = '<option value="">-- Sin asignar --</option>';
+                
+                areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.id;
+                    option.textContent = area.nombre;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error cargando cotos para perros:', error);
+            }
+        }
+
+        // Cargar lista de perros
+        async function cargarPerros() {
+            try {
+                const response = await fetch('/perros');
+                const perros = await response.json();
+                
+                listaPerros = perros;
+                actualizarListaPerros(perros);
+            } catch (error) {
+                console.error('Error cargando perros:', error);
+                document.getElementById('listaPerros').innerHTML = 
+                    '<div style="text-align: center; color: red; padding: 20px;">Error cargando perros</div>';
+            }
+        }
+
+        // Actualizar la lista de perros en el panel
+        function actualizarListaPerros(perros) {
+            const listaDiv = document.getElementById('listaPerros');
+            
+            if (perros.length === 0) {
+                listaDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No hay perros registrados</div>';
+                return;
+            }
+            
+            listaDiv.innerHTML = perros.map(perro => `
+                <div class="perro-item">
+                    <div class="perro-info">
+                        <h4>${perro.NOMBRE}</h4>
+                        <p><strong>Identificador:</strong> ${perro.IDENTIFICADOR}</p>
+                        ${perro.POS_X && perro.POS_Y ? 
+                            `<p class="perro-ubicacion">📍 ${perro.POS_X.toFixed(6)}, ${perro.POS_Y.toFixed(6)}</p>` : 
+                            `<p style="color: #999;">📍 Sin ubicación registrada</p>`
+                        }
+                        <p><strong>Estado:</strong> 
+                            <span class="status-activo">ACTIVO</span>
+                        </p>
+                    </div>
+                    <div class="perro-actions">
+                        <button class="btn-editar-perro" onclick="editarPerro(${perro.ID})">Editar</button>
+                        <button class="btn-ubicacion" onclick="actualizarUbicacionPerro(${perro.ID})">📍 Ubicación</button>
+                        ${perro.POS_X && perro.POS_Y ? 
+                            `<button class="btn-asignar" onclick="mostrarEnMapa(${perro.POS_Y}, ${perro.POS_X}, '${perro.NOMBRE}')">🗺️ Ver</button>` : 
+                            ''
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Mostrar perro en el mapa
+        function mostrarEnMapa(lat, lng, nombre) {
+            if (!window.superAdminMap) return;
+            
+            // Limpiar marcadores anteriores de perros
+            marcadoresPerros.forEach(marker => {
+                window.superAdminMap.removeLayer(marker);
+            });
+            marcadoresPerros.clear();
+            
+            // Crear marcador especial para perro
+            const perroIcon = L.divIcon({
+                className: 'perro-marcador',
+                html: '<div style="background: #ff6b35; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">🐕</div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            
+            const marker = L.marker([lat, lng], { icon: perroIcon })
+                .bindPopup(`<b>${nombre}</b><br>📍 Perro de caza<br>${lat.toFixed(5)}, ${lng.toFixed(5)}`)
+                .addTo(window.superAdminMap);
+            
+            marcadoresPerros.set('perro-actual', marker);
+            window.superAdminMap.setView([lat, lng], 15);
+            
+            cerrarPanelPerros();
+        }
+
+        // Usar ubicación actual para el perro
+        function usarUbicacionActualPerro() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        document.getElementById('perroPosY').value = position.coords.latitude;
+                        document.getElementById('perroPosX').value = position.coords.longitude;
+                        document.getElementById('mensajePerro').innerHTML = 
+                            '<span style="color: green;">📍 Ubicación obtenida correctamente</span>';
+                    },
+                    error => {
+                        document.getElementById('mensajePerro').innerHTML = 
+                            '<span style="color: red;">❌ Error obteniendo ubicación: ' + error.message + '</span>';
+                    }
+                );
+            } else {
+                document.getElementById('mensajePerro').innerHTML = 
+                    '<span style="color: red;">❌ Geolocalización no soportada</span>';
+            }
+        }
+
+        function limpiarCoordenadasPerro() {
+            document.getElementById('perroPosX').value = '';
+            document.getElementById('perroPosY').value = '';
+        }
+
+        // Guardar o actualizar perro
+        async function guardarPerro() {
+            const nombre = document.getElementById('perroNombre').value.trim();
+            const identificador = document.getElementById('perroIdentificador').value.trim();
+            const pos_x = document.getElementById('perroPosX').value;
+            const pos_y = document.getElementById('perroPosY').value;
+            const idCoto = document.getElementById('perroCoto').value;
+            const mensajeDiv = document.getElementById('mensajePerro');
+
+            // Validaciones
+            if (!nombre || !identificador) {
+                mensajeDiv.innerHTML = '<span style="color: red;">❌ Nombre e identificador son obligatorios</span>';
+                return;
+            }
+
+            const perroData = {
+                nombre: nombre,
+                identificador: identificador,
+                pos_x: pos_x ? parseFloat(pos_x) : null,
+                pos_y: pos_y ? parseFloat(pos_y) : null,
+                idCoto: idCoto || null
+            };
+
+            try {
+                let response;
+                
+                if (modoEdicionPerro && perroEditandoId) {
+                    // Actualizar perro existente
+                    response = await fetch(`/perros/${perroEditandoId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(perroData)
+                    });
+                } else {
+                    // Crear nuevo perro
+                    response = await fetch('/perros', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(perroData)
+                    });
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    mensajeDiv.innerHTML = `<span style="color: green;">✅ ${data.message}</span>`;
+                    
+                    // Limpiar formulario y recargar lista
+                    cancelarEdicionPerro();
+                    cargarPerros();
+                    
+                    setTimeout(() => {
+                        mensajeDiv.innerHTML = '';
+                    }, 3000);
+                } else {
+                    mensajeDiv.innerHTML = `<span style="color: red;">❌ ${data.error}</span>`;
+                }
+            } catch (error) {
+                mensajeDiv.innerHTML = '<span style="color: red;">❌ Error de conexión con el servidor</span>';
+                console.error('Error:', error);
+            }
+        }
+
+        // Editar perro
+        function editarPerro(idPerro) {
+            const perro = listaPerros.find(p => p.ID === idPerro);
+            if (perro) {
+                modoEdicionPerro = true;
+                perroEditandoId = idPerro;
+                
+                // Llenar formulario
+                document.getElementById('perroNombre').value = perro.NOMBRE;
+                document.getElementById('perroIdentificador').value = perro.IDENTIFICADOR;
+                document.getElementById('perroPosX').value = perro.POS_X || '';
+                document.getElementById('perroPosY').value = perro.POS_Y || '';
+                
+                // Cambiar título y botón
+                document.getElementById('tituloFormPerro').textContent = '✏️ Editar Perro de Caza';
+                document.getElementById('btnAccionPerro').textContent = '🔄 Actualizar Perro';
+                document.getElementById('btnAccionPerro').style.background = '#ffc107';
+                document.getElementById('btnAccionPerro').style.color = 'black';
+                
+                // Mostrar botón cancelar
+                let cancelarBtn = document.getElementById('btnCancelarEdicionPerro');
+                if (!cancelarBtn) {
+                    cancelarBtn = document.createElement('button');
+                    cancelarBtn.id = 'btnCancelarEdicionPerro';
+                    cancelarBtn.textContent = '❌ Cancelar Edición';
+                    cancelarBtn.style.cssText = `
+                        width: 100%; 
+                        padding: 8px; 
+                        background: #dc3545; 
+                        color: white; 
+                        border: none; 
+                        border-radius: 4px; 
+                        cursor: pointer; 
+                        margin-top: 10px;
+                        font-size: 12px;
+                    `;
+                    cancelarBtn.onclick = cancelarEdicionPerro;
+                    
+                    const formDiv = document.querySelector('.perro-form');
+                    formDiv.appendChild(cancelarBtn);
+                }
+                
+                cancelarBtn.style.display = 'block';
+                
+                // Mensaje informativo
+                document.getElementById('mensajePerro').innerHTML = 
+                    `<span style="color: #ffc107;">✏️ Editando perro: ${perro.NOMBRE}</span>`;
+            }
+        }
+
+        // Cancelar edición de perro
+        function cancelarEdicionPerro() {
+            // Limpiar formulario
+            document.getElementById('perroNombre').value = '';
+            document.getElementById('perroIdentificador').value = '';
+            document.getElementById('perroPosX').value = '';
+            document.getElementById('perroPosY').value = '';
+            document.getElementById('perroCoto').value = '';
+            
+            // Restaurar variables
+            modoEdicionPerro = false;
+            perroEditandoId = null;
+            
+            // Restaurar título y botón
+            document.getElementById('tituloFormPerro').textContent = '➕ Nuevo Perro de Caza';
+            document.getElementById('btnAccionPerro').textContent = '✅ Registrar Perro';
+            document.getElementById('btnAccionPerro').style.background = '#28a745';
+            document.getElementById('btnAccionPerro').style.color = 'white';
+            
+            // Ocultar botón cancelar
+            const cancelarBtn = document.getElementById('btnCancelarEdicionPerro');
+            if (cancelarBtn) {
+                cancelarBtn.style.display = 'none';
+            }
+            
+            // Limpiar mensaje
+            document.getElementById('mensajePerro').innerHTML = '';
+        }
+
+        // Actualizar ubicación de un perro específico
+        async function actualizarUbicacionPerro(idPerro) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async position => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        try {
+                            const response = await fetch(`/perros/${idPerro}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    pos_x: lng,
+                                    pos_y: lat
+                                })
+                            });
+                            
+                            const data = await response.json();
+                            
+                            if (response.ok) {
+                                alert(`✅ Ubicación actualizada para el perro\n📍 ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+                                cargarPerros();
+                            } else {
+                                alert('❌ Error: ' + data.error);
+                            }
+                        } catch (error) {
+                            alert('❌ Error de conexión');
+                        }
+                    },
+                    error => {
+                        alert('❌ Error obteniendo ubicación: ' + error.message);
+                    }
+                );
+            } else {
+                alert('❌ Geolocalización no soportada');
+            }
+        }
+
+        // ========== MONITOREO DE PERROS EN TIEMPO REAL ==========
+
+        // Iniciar monitoreo de perros
+        async function iniciarMonitoreoPerros() {
+            const panel = document.getElementById('monitoreoPerrosPanel');
+            panel.style.display = 'block';
+            
+            document.getElementById('estadoMonitoreoPerros').textContent = '🔄 Monitoreo activo';
+            document.getElementById('estadoMonitoreoPerros').style.background = '#d4edda';
+            document.getElementById('estadoMonitoreoPerros').style.color = '#155724';
+            
+            // Detener monitoreo anterior si existe
+            if (intervaloMonitoreoPerros) {
+                clearInterval(intervaloMonitoreoPerros);
+            }
+            
+            // Iniciar nuevo intervalo
+            intervaloMonitoreoPerros = setInterval(actualizarUbicacionesPerros, 5000);
+            
+            // Primera actualización inmediata
+            await actualizarUbicacionesPerros();
+            
+            console.log('✅ Monitoreo de perros iniciado');
+        }
+
+        // Detener monitoreo de perros
+        function detenerMonitoreoPerros() {
+            if (intervaloMonitoreoPerros) {
+                clearInterval(intervaloMonitoreoPerros);
+                intervaloMonitoreoPerros = null;
+            }
+            
+            document.getElementById('estadoMonitoreoPerros').textContent = '⏹️ Monitoreo detenido';
+            document.getElementById('estadoMonitoreoPerros').style.background = '#f8d7da';
+            document.getElementById('estadoMonitoreoPerros').style.color = '#721c24';
+            
+            // Limpiar marcadores del mapa
+            marcadoresPerros.forEach(marker => {
+                if (marker && window.superAdminMap) {
+                    window.superAdminMap.removeLayer(marker);
+                }
+            });
+            marcadoresPerros.clear();
+            
+            // Limpiar lista
+            document.getElementById('listaPerrosMonitoreo').innerHTML = 
+                '<div style="text-align: center; color: #666; padding: 20px;">No hay perros en monitoreo</div>';
+            
+            console.log('❌ Monitoreo de perros detenido');
+        }
+
+        // Actualizar ubicaciones de perros
+        async function actualizarUbicacionesPerros() {
+            try {
+                const response = await fetch('/perros/ubicaciones');
+                const ubicaciones = await response.json();
+                
+                // Actualizar lista en panel
+                actualizarListaMonitoreoPerros(ubicaciones);
+                
+                // Actualizar marcadores en mapa
+                actualizarMarcadoresPerros(ubicaciones);
+                
+                // Actualizar contador
+                document.getElementById('contadorPerros').textContent = 
+                    `${ubicaciones.length} perros activos | Última actualización: ${new Date().toLocaleTimeString()}`;
+                
+            } catch (error) {
+                console.error('Error obteniendo ubicaciones de perros:', error);
+                document.getElementById('estadoMonitoreoPerros').textContent = '❌ Error de conexión';
+            }
+        }
+
+        // Actualizar lista de monitoreo
+        function actualizarListaMonitoreoPerros(ubicaciones) {
+            const listaDiv = document.getElementById('listaPerrosMonitoreo');
+            
+            if (ubicaciones.length === 0) {
+                listaDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No hay perros con ubicación disponible</div>';
+                return;
+            }
+            
+            listaDiv.innerHTML = ubicaciones.map(perro => `
+                <div class="perro-monitoreo-item">
+                    <strong>${perro.nombre}</strong><br>
+                    <small>ID: ${perro.identificador}</small><br>
+                    <small>📍 ${perro.lat.toFixed(5)}, ${perro.lng.toFixed(5)}</small><br>
+                    <small>🏞️ ${perro.cotoNombre}</small>
+                </div>
+            `).join('');
+        }
+
+        // Actualizar marcadores en el mapa
+        function actualizarMarcadoresPerros(ubicaciones) {
+            if (!window.superAdminMap) return;
+            
+            // Limpiar marcadores anteriores
+            marcadoresPerros.forEach(marker => {
+                window.superAdminMap.removeLayer(marker);
+            });
+            marcadoresPerros.clear();
+            
+            // Crear icono personalizado para perros
+            const perroIcon = L.divIcon({
+                className: 'perro-marcador',
+                html: '<div style="background: #ff6b35; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">🐕</div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            
+            // Agregar nuevos marcadores
+            ubicaciones.forEach(perro => {
+                const marker = L.marker([perro.lat, perro.lng], { icon: perroIcon })
+                    .bindPopup(`
+                        <b>${perro.nombre}</b><br>
+                        🆔 ${perro.identificador}<br>
+                        📍 ${perro.lat.toFixed(5)}, ${perro.lng.toFixed(5)}<br>
+                        🏞️ ${perro.cotoNombre}<br>
+                        ⏰ ${new Date(perro.timestamp).toLocaleTimeString()}
+                    `)
+                    .addTo(window.superAdminMap);
+                
+                marcadoresPerros.set(perro.id.toString(), marker);
+            });
+        }
+
+        // Cerrar panel de monitoreo de perros
+        function cerrarMonitoreoPerros() {
+            document.getElementById('monitoreoPerrosPanel').style.display = 'none';
+            detenerMonitoreoPerros();
+        }
+
+        // Para administradores de coto (añadir en la función inicializarAdminCoto):
+        async function cargarPerrosCoto(cotoId) {
+            try {
+                const response = await fetch(`/cotos/${cotoId}/perros`);
+                const perros = await response.json();
+                
+                // Agregar perros al mapa del administrador
+                if (perros.length > 0 && window.adminMap) {
+                    perros.forEach(perro => {
+                        if (perro.POS_X && perro.POS_Y) {
+                            const perroIcon = L.divIcon({
+                                className: 'perro-marcador',
+                                html: '<div style="background: #ff6b35; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">🐕</div>',
+                                iconSize: [24, 24],
+                                iconAnchor: [12, 12]
+                            });
+                            
+                            L.marker([perro.POS_Y, perro.POS_X], { icon: perroIcon })
+                                .bindPopup(`<b>${perro.NOMBRE}</b><br>🆔 ${perro.IDENTIFICADOR}`)
+                                .addTo(window.adminMap);
+                        }
+                    });
+                }
+                
+                return perros;
+            } catch (error) {
+                console.error('Error cargando perros del coto:', error);
+                return [];
+            }
+        }
+
         // ========== FUNCIONALIDAD ADMINISTRADOR DE COTO ==========
 
         function inicializarAdminCoto(cotoInfo) {
@@ -2271,6 +3025,9 @@
             let intervaloMonitoreo = null;
             let marcadoresSocios = {};
             let cotoPolygon = null;
+            
+            // Variables para perros
+            let marcadoresPerrosAdmin = new Map();
 
             // Inicializar mapa
             window.adminMap = L.map('adminMap', {zoomControl: false}).setView([37.8916, -4.7794], 13);
@@ -2294,7 +3051,75 @@
             document.getElementById('currentCotoName').textContent = cotoInfo.nombre;
             document.getElementById('currentAdminName').textContent = `Admin: ${currentUser.nombre}`;
 
-            // Funciones de monitoreo
+            // ========== AÑADE AQUÍ LA CARGA DE PERROS ==========
+            // Cargar perros asignados a este coto
+            async function cargarPerrosDelCoto() {
+                try {
+                    const response = await fetch(`/cotos/${currentCotoId}/perros`);
+                    const perros = await response.json();
+                    
+                    // Limpiar marcadores anteriores de perros
+                    marcadoresPerrosAdmin.forEach(marker => {
+                        if (marker) window.adminMap.removeLayer(marker);
+                    });
+                    marcadoresPerrosAdmin.clear();
+                    
+                    // Crear icono personalizado para perros
+                    const perroIcon = L.divIcon({
+                        className: 'perro-marcador',
+                        html: '<div style="background: #ff6b35; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">🐕</div>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    });
+                    
+                    // Agregar marcadores para perros con ubicación
+                    perros.forEach(perro => {
+                        if (perro.POS_X && perro.POS_Y) {
+                            const marker = L.marker([perro.POS_Y, perro.POS_X], { icon: perroIcon })
+                                .bindPopup(`
+                                    <b>${perro.NOMBRE}</b><br>
+                                    🆔 ${perro.IDENTIFICADOR}<br>
+                                    📍 ${perro.POS_Y.toFixed(5)}, ${perro.POS_X.toFixed(5)}<br>
+                                    🐕 Perro de caza
+                                `)
+                                .addTo(window.adminMap);
+                            
+                            marcadoresPerrosAdmin.set(perro.ID.toString(), marker);
+                        }
+                    });
+                    
+                    console.log(`✅ ${perros.length} perros cargados para el coto ${cotoInfo.nombre}`);
+                    
+                    // Actualizar estadísticas para incluir perros
+                    actualizarEstadisticasConPerros(perros.length);
+                    
+                } catch (error) {
+                    console.error('Error cargando perros del coto:', error);
+                }
+            }
+
+            // Función para actualizar estadísticas incluyendo perros
+            function actualizarEstadisticasConPerros(numPerros) {
+                const statsDiv = document.querySelector('.stats');
+                
+                // Añadir estadística de perros si no existe
+                if (!document.getElementById('statPerros')) {
+                    statsDiv.innerHTML += `
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalPerros">${numPerros}</div>
+                            <div class="stat-label">Perros</div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('totalPerros').textContent = numPerros;
+                }
+            }
+
+            // ========== AÑADE AQUÍ LA LLAMADA INICIAL ==========
+            // Cargar perros al iniciar
+            cargarPerrosDelCoto();
+
+            // Funciones de monitoreo (socios)
             async function actualizarSociosEnCoto() {
                 if (!currentCotoId) return;
 
@@ -2336,7 +3161,7 @@
             }
 
             function actualizarMarcadoresEnMapa(socios) {
-                // Limpiar marcadores anteriores
+                // Limpiar marcadores anteriores de socios
                 Object.values(marcadoresSocios).forEach(marker => {
                     if (marker) window.adminMap.removeLayer(marker);
                 });
@@ -2383,7 +3208,7 @@
                 document.getElementById('statusMessage').textContent = 'Monitoreo detenido';
                 document.getElementById('statusMessage').className = 'status-offline';
                 
-                // Limpiar marcadores
+                // Limpiar marcadores de socios
                 Object.values(marcadoresSocios).forEach(marker => {
                     if (marker) window.adminMap.removeLayer(marker);
                 });
@@ -2397,6 +3222,39 @@
             // Event listeners para admin de coto
             document.getElementById('btnIniciarMonitoreoAdmin').addEventListener('click', iniciarMonitoreo);
             document.getElementById('btnDetenerMonitoreoAdmin').addEventListener('click', detenerMonitoreo);
+
+            // ========== AÑADE ESTO PARA ACTUALIZAR PERROS PERIÓDICAMENTE ==========
+            // Opcional: Si quieres actualizar perros periódicamente como los socios
+            let intervaloPerros = null;
+            
+            function iniciarMonitoreoPerros() {
+                if (intervaloPerros) {
+                    clearInterval(intervaloPerros);
+                }
+                
+                // Actualizar perros cada 30 segundos (más lento que socios)
+                intervaloPerros = setInterval(cargarPerrosDelCoto, 30000);
+            }
+            
+            function detenerMonitoreoPerros() {
+                if (intervaloPerros) {
+                    clearInterval(intervaloPerros);
+                    intervaloPerros = null;
+                }
+            }
+            
+            // Iniciar monitoreo de perros cuando se inicia el monitoreo de socios
+            const originalIniciarMonitoreo = iniciarMonitoreo;
+            iniciarMonitoreo = function() {
+                originalIniciarMonitoreo();
+                iniciarMonitoreoPerros();
+            };
+            
+            const originalDetenerMonitoreo = detenerMonitoreo;
+            detenerMonitoreo = function() {
+                originalDetenerMonitoreo();
+                detenerMonitoreoPerros();
+            };
 
             // Iniciar monitoreo automáticamente
             iniciarMonitoreo();
