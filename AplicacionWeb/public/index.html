@@ -166,6 +166,25 @@
             text-align: center;
         }
 
+        /* Estilos para mostrar perros en la lista de socios */
+        .perro-mini-item {
+            background: #f8f9fa;
+            border-left: 3px solid #ff6b35;
+            padding: 4px 8px;
+            margin: 2px 0;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+
+        .perro-con-ubicacion {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .perro-sin-ubicacion {
+            color: #6c757d;
+        }
+
         /* Panel de gestión de perros */
         #perrosPanel {
             position: fixed;
@@ -867,6 +886,35 @@
             z-index: 1000;
             display: none;
         }
+
+        /* ESTILOS ESPECÍFICOS PARA EL SELECT DE SOCIOS */
+        #perroSocio {
+            width: 100% !important;
+            padding: 10px 12px !important;
+            margin: 10px 0 !important;
+            border: 2px solid #ddd !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            background-color: white !important;
+            color: #333 !important;
+            cursor: pointer !important;
+            box-sizing: border-box !important;
+            display: block !important;
+            z-index: 1001 !important;
+            position: relative !important;
+        }
+
+        #perroSocio option {
+            padding: 10px !important;
+            background-color: white !important;
+            color: #333 !important;
+        }
+
+        #perroSocio:focus {
+            outline: none !important;
+            border-color: #2A9DF4 !important;
+            box-shadow: 0 0 0 3px rgba(42, 157, 244, 0.1) !important;
+        }
     </style>
 </head>
 <body>
@@ -916,9 +964,10 @@
                 <input type="text" id="perroIdentificador" placeholder="Identificador único (máx 50 caracteres)" maxlength="50">
                 
                 <div style="margin: 10px 0;">
-                    <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Coto Asignado (opcional)</label>
-                    <select id="perroCoto" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Socio Propietario (opcional)</label>
+                    <select id="perroSocio">
                         <option value="">-- Sin asignar --</option>
+                        <!-- Los socios se cargarán aquí dinámicamente -->
                     </select>
                 </div>
                 
@@ -1391,6 +1440,13 @@
             let editPolygon = null;
             let editLayer = null;
             let modoEdicionActivo = false;
+
+            // Variables para gestión de perros
+            let listaPerros = [];
+            let marcadoresPerros = new Map();
+            let intervaloMonitoreoPerros = null;
+            let modoEdicionPerro = false;
+            let perroEditandoId = null;
 
             // Mostrar/ocultar selección de coto según tipo de admin
             document.getElementById('adminTipo').addEventListener('change', function() {
@@ -2511,11 +2567,11 @@
         // ========== FUNCIONALIDAD DE GESTIÓN DE PERROS ==========
 
         // Variables globales para perros
-        let listaPerros = [];
-        let marcadoresPerros = new Map();
-        let intervaloMonitoreoPerros = null;
-        let modoEdicionPerro = false;
-        let perroEditandoId = null;
+        let listaPerrosGlobal = [];
+        let marcadoresPerrosGlobal = new Map();
+        let intervaloMonitoreoPerrosGlobal = null;
+        let modoEdicionPerroGlobal = false;
+        let perroEditandoIdGlobal = null;
 
         // Mostrar panel de perros
         document.getElementById('gestionarPerros').addEventListener('click', function() {
@@ -2538,8 +2594,9 @@
             // Limpiar formulario al abrir el panel
             cancelarEdicionPerro();
             
-            // Cargar lista de cotos para el select
-            cargarCotosParaPerros();
+            // Cargar lista de SOCIOS para el select
+            cargarSociosParaPerros();
+            
             // Cargar perros existentes
             cargarPerros();
         }
@@ -2549,23 +2606,59 @@
             document.getElementById('perrosPanel').style.display = 'none';
         }
 
-        // Cargar cotos para el select de perros
-        async function cargarCotosParaPerros() {
+        // Cargar socios para el select de perros
+        async function cargarSociosParaPerros() {
             try {
-                const response = await fetch('/areas');
-                const areas = await response.json();
+                console.log("🔄 Iniciando carga de socios para perros...");
                 
-                const select = document.getElementById('perroCoto');
+                const response = await fetch('/socios');
+                console.log('🔍 Estado respuesta:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const socios = await response.json();
+                console.log('📋 Socios recibidos del backend:', socios);
+                
+                const select = document.getElementById('perroSocio');
+                console.log('🔍 Elemento select encontrado:', select);
+                
+                if (!select) {
+                    console.error('❌ ERROR: No se encontró el elemento select con id "perroSocio"');
+                    return;
+                }
+                
+                // Limpiar y verificar
                 select.innerHTML = '<option value="">-- Sin asignar --</option>';
+                console.log('🔍 Select limpiado');
                 
-                areas.forEach(area => {
+                // Añadir cada socio
+                socios.forEach((socio, index) => {
+                    console.log(`   👥 Procesando socio ${index + 1}:`, socio);
                     const option = document.createElement('option');
-                    option.value = area.id;
-                    option.textContent = area.nombre;
+                    option.value = socio.ID;
+                    const texto = `${socio.NOMBRE} (${socio.USUARIO})${socio.DNI ? ` - DNI: ${socio.DNI}` : ''}`;
+                    option.textContent = texto;
                     select.appendChild(option);
                 });
+                
+                console.log(`✅ ${socios.length} socios añadidos al select`);
+                console.log('🔍 HTML final del select:', select.innerHTML);
+                
+                // Forzar que se muestre
+                select.style.display = 'block';
+                select.style.opacity = '1';
+                select.style.visibility = 'visible';
+                
             } catch (error) {
-                console.error('Error cargando cotos para perros:', error);
+                console.error('❌ Error cargando socios para perros:', error);
+                
+                // Fallback: mostrar mensaje en el select
+                const select = document.getElementById('perroSocio');
+                if (select) {
+                    select.innerHTML = '<option value="">⚠️ Error cargando socios</option>';
+                }
             }
         }
 
@@ -2575,7 +2668,7 @@
                 const response = await fetch('/perros');
                 const perros = await response.json();
                 
-                listaPerros = perros;
+                listaPerrosGlobal = perros;
                 actualizarListaPerros(perros);
             } catch (error) {
                 console.error('Error cargando perros:', error);
@@ -2602,6 +2695,11 @@
                             `<p class="perro-ubicacion">📍 ${perro.POS_X.toFixed(6)}, ${perro.POS_Y.toFixed(6)}</p>` : 
                             `<p style="color: #999;">📍 Sin ubicación registrada</p>`
                         }
+                        <p><strong>Propietario:</strong> 
+                            <span id="propietario-${perro.ID}" style="color: #666;">
+                                Cargando...
+                            </span>
+                        </p>
                         <p><strong>Estado:</strong> 
                             <span class="status-activo">ACTIVO</span>
                         </p>
@@ -2616,6 +2714,9 @@
                     </div>
                 </div>
             `).join('');
+            
+            // Ahora cargamos la información del socio para cada perro
+            cargarPropietariosPerros(perros);
         }
 
         // Mostrar perro en el mapa
@@ -2623,10 +2724,10 @@
             if (!window.superAdminMap) return;
             
             // Limpiar marcadores anteriores de perros
-            marcadoresPerros.forEach(marker => {
+            marcadoresPerrosGlobal.forEach(marker => {
                 window.superAdminMap.removeLayer(marker);
             });
-            marcadoresPerros.clear();
+            marcadoresPerrosGlobal.clear();
             
             // Crear marcador especial para perro
             const perroIcon = L.divIcon({
@@ -2640,7 +2741,7 @@
                 .bindPopup(`<b>${nombre}</b><br>📍 Perro de caza<br>${lat.toFixed(5)}, ${lng.toFixed(5)}`)
                 .addTo(window.superAdminMap);
             
-            marcadoresPerros.set('perro-actual', marker);
+            marcadoresPerrosGlobal.set('perro-actual', marker);
             window.superAdminMap.setView([lat, lng], 15);
             
             cerrarPanelPerros();
@@ -2678,7 +2779,7 @@
             const identificador = document.getElementById('perroIdentificador').value.trim();
             const pos_x = document.getElementById('perroPosX').value;
             const pos_y = document.getElementById('perroPosY').value;
-            const idCoto = document.getElementById('perroCoto').value;
+            const idSocio = document.getElementById('perroSocio').value; // Cambiado de idCoto a idSocio
             const mensajeDiv = document.getElementById('mensajePerro');
 
             // Validaciones
@@ -2692,15 +2793,15 @@
                 identificador: identificador,
                 pos_x: pos_x ? parseFloat(pos_x) : null,
                 pos_y: pos_y ? parseFloat(pos_y) : null,
-                idCoto: idCoto || null
+                idSocio: idSocio || null // Cambiado de idCoto a idSocio
             };
 
             try {
                 let response;
                 
-                if (modoEdicionPerro && perroEditandoId) {
+                if (modoEdicionPerroGlobal && perroEditandoIdGlobal) {
                     // Actualizar perro existente
-                    response = await fetch(`/perros/${perroEditandoId}`, {
+                    response = await fetch(`/perros/${perroEditandoIdGlobal}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(perroData)
@@ -2717,7 +2818,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    mensajeDiv.innerHTML = `<span style="color: green;">✅ ${data.message}</span>`;
+                    mensajeDiv.innerHTML = `<span style="color: green;">✅ ${data.message || data.mensaje}</span>`;
                     
                     // Limpiar formulario y recargar lista
                     cancelarEdicionPerro();
@@ -2727,7 +2828,7 @@
                         mensajeDiv.innerHTML = '';
                     }, 3000);
                 } else {
-                    mensajeDiv.innerHTML = `<span style="color: red;">❌ ${data.error}</span>`;
+                    mensajeDiv.innerHTML = `<span style="color: red;">❌ ${data.error || 'Error desconocido'}</span>`;
                 }
             } catch (error) {
                 mensajeDiv.innerHTML = '<span style="color: red;">❌ Error de conexión con el servidor</span>';
@@ -2735,12 +2836,62 @@
             }
         }
 
+        async function cargarPropietariosPerros(perros) {
+            try {
+                // Obtener todos los socios para el mapeo
+                const responseSocios = await fetch('/socios');
+                const socios = await responseSocios.json();
+                
+                // Crear un mapa de socios por ID para búsqueda rápida
+                const sociosMap = {};
+                socios.forEach(socio => {
+                    sociosMap[socio.ID] = socio;
+                });
+                
+                // Para cada perro, obtener su propietario
+                for (const perro of perros) {
+                    try {
+                        const response = await fetch(`/perros/${perro.ID}/propietario`);
+                        const propietarioData = await response.json();
+                        
+                        if (response.ok && propietarioData.propietario) {
+                            const socioId = propietarioData.propietario.ID_SOCIO;
+                            const socio = sociosMap[socioId];
+                            
+                            if (socio) {
+                                const propietarioElement = document.getElementById(`propietario-${perro.ID}`);
+                                if (propietarioElement) {
+                                    propietarioElement.textContent = `${socio.NOMBRE} (${socio.USUARIO})`;
+                                    propietarioElement.style.color = '#2A9DF4';
+                                }
+                            }
+                        } else {
+                            const propietarioElement = document.getElementById(`propietario-${perro.ID}`);
+                            if (propietarioElement) {
+                                propietarioElement.textContent = 'Sin asignar';
+                                propietarioElement.style.color = '#999';
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Error cargando propietario para perro ${perro.ID}:`, error);
+                        const propietarioElement = document.getElementById(`propietario-${perro.ID}`);
+                        if (propietarioElement) {
+                            propietarioElement.textContent = 'Error al cargar';
+                            propietarioElement.style.color = '#dc3545';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando socios para propietarios:', error);
+            }
+        }
+
         // Editar perro
         function editarPerro(idPerro) {
-            const perro = listaPerros.find(p => p.ID === idPerro);
+            const perro = listaPerrosGlobal.find(p => p.ID === idPerro);
             if (perro) {
-                modoEdicionPerro = true;
-                perroEditandoId = idPerro;
+                modoEdicionPerroGlobal = true;
+                perroEditandoIdGlobal = idPerro;
                 
                 // Llenar formulario
                 document.getElementById('perroNombre').value = perro.NOMBRE;
@@ -2779,9 +2930,27 @@
                 
                 cancelarBtn.style.display = 'block';
                 
+                // Cargar el socio propietario actual
+                cargarSocioPropietarioActual(idPerro);
+                
                 // Mensaje informativo
                 document.getElementById('mensajePerro').innerHTML = 
                     `<span style="color: #ffc107;">✏️ Editando perro: ${perro.NOMBRE}</span>`;
+            }
+        }
+
+        // Función para cargar el socio propietario actual
+        async function cargarSocioPropietarioActual(perroId) {
+            try {
+                const response = await fetch(`/perros/${perroId}/propietario`);
+                const data = await response.json();
+                
+                if (response.ok && data.propietario) {
+                    // Establecer el socio actual en el select
+                    document.getElementById('perroSocio').value = data.propietario.ID_SOCIO;
+                }
+            } catch (error) {
+                console.error('Error cargando socio propietario:', error);
             }
         }
 
@@ -2792,11 +2961,11 @@
             document.getElementById('perroIdentificador').value = '';
             document.getElementById('perroPosX').value = '';
             document.getElementById('perroPosY').value = '';
-            document.getElementById('perroCoto').value = '';
+            document.getElementById('perroSocio').value = '';
             
             // Restaurar variables
-            modoEdicionPerro = false;
-            perroEditandoId = null;
+            modoEdicionPerroGlobal = false;
+            perroEditandoIdGlobal = null;
             
             // Restaurar título y botón
             document.getElementById('tituloFormPerro').textContent = '➕ Nuevo Perro de Caza';
@@ -2865,12 +3034,12 @@
             document.getElementById('estadoMonitoreoPerros').style.color = '#155724';
             
             // Detener monitoreo anterior si existe
-            if (intervaloMonitoreoPerros) {
-                clearInterval(intervaloMonitoreoPerros);
+            if (intervaloMonitoreoPerrosGlobal) {
+                clearInterval(intervaloMonitoreoPerrosGlobal);
             }
             
             // Iniciar nuevo intervalo
-            intervaloMonitoreoPerros = setInterval(actualizarUbicacionesPerros, 5000);
+            intervaloMonitoreoPerrosGlobal = setInterval(actualizarUbicacionesPerros, 5000);
             
             // Primera actualización inmediata
             await actualizarUbicacionesPerros();
@@ -2880,9 +3049,9 @@
 
         // Detener monitoreo de perros
         function detenerMonitoreoPerros() {
-            if (intervaloMonitoreoPerros) {
-                clearInterval(intervaloMonitoreoPerros);
-                intervaloMonitoreoPerros = null;
+            if (intervaloMonitoreoPerrosGlobal) {
+                clearInterval(intervaloMonitoreoPerrosGlobal);
+                intervaloMonitoreoPerrosGlobal = null;
             }
             
             document.getElementById('estadoMonitoreoPerros').textContent = '⏹️ Monitoreo detenido';
@@ -2890,12 +3059,12 @@
             document.getElementById('estadoMonitoreoPerros').style.color = '#721c24';
             
             // Limpiar marcadores del mapa
-            marcadoresPerros.forEach(marker => {
+            marcadoresPerrosGlobal.forEach(marker => {
                 if (marker && window.superAdminMap) {
                     window.superAdminMap.removeLayer(marker);
                 }
             });
-            marcadoresPerros.clear();
+            marcadoresPerrosGlobal.clear();
             
             // Limpiar lista
             document.getElementById('listaPerrosMonitoreo').innerHTML = 
@@ -2940,7 +3109,7 @@
                     <strong>${perro.nombre}</strong><br>
                     <small>ID: ${perro.identificador}</small><br>
                     <small>📍 ${perro.lat.toFixed(5)}, ${perro.lng.toFixed(5)}</small><br>
-                    <small>🏞️ ${perro.cotoNombre}</small>
+                    <small>👤 ${perro.socioNombre}</small>
                 </div>
             `).join('');
         }
@@ -2950,10 +3119,10 @@
             if (!window.superAdminMap) return;
             
             // Limpiar marcadores anteriores
-            marcadoresPerros.forEach(marker => {
+            marcadoresPerrosGlobal.forEach(marker => {
                 window.superAdminMap.removeLayer(marker);
             });
-            marcadoresPerros.clear();
+            marcadoresPerrosGlobal.clear();
             
             // Crear icono personalizado para perros
             const perroIcon = L.divIcon({
@@ -2970,12 +3139,12 @@
                         <b>${perro.nombre}</b><br>
                         🆔 ${perro.identificador}<br>
                         📍 ${perro.lat.toFixed(5)}, ${perro.lng.toFixed(5)}<br>
-                        🏞️ ${perro.cotoNombre}<br>
+                        👤 ${perro.socioNombre}<br>
                         ⏰ ${new Date(perro.timestamp).toLocaleTimeString()}
                     `)
                     .addTo(window.superAdminMap);
                 
-                marcadoresPerros.set(perro.id.toString(), marker);
+                marcadoresPerrosGlobal.set(perro.id.toString(), marker);
             });
         }
 
@@ -3051,47 +3220,50 @@
             document.getElementById('currentCotoName').textContent = cotoInfo.nombre;
             document.getElementById('currentAdminName').textContent = `Admin: ${currentUser.nombre}`;
 
-            // ========== AÑADE AQUÍ LA CARGA DE PERROS ==========
-            // Cargar perros asignados a este coto
+            // Función para cargar perros del coto (para complementar el monitoreo)
             async function cargarPerrosDelCoto() {
                 try {
                     const response = await fetch(`/cotos/${currentCotoId}/perros`);
                     const perros = await response.json();
                     
-                    // Limpiar marcadores anteriores de perros
-                    marcadoresPerrosAdmin.forEach(marker => {
-                        if (marker) window.adminMap.removeLayer(marker);
-                    });
-                    marcadoresPerrosAdmin.clear();
-                    
-                    // Crear icono personalizado para perros
-                    const perroIcon = L.divIcon({
-                        className: 'perro-marcador',
-                        html: '<div style="background: #ff6b35; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">🐕</div>',
-                        iconSize: [24, 24],
-                        iconAnchor: [12, 12]
-                    });
-                    
-                    // Agregar marcadores para perros con ubicación
-                    perros.forEach(perro => {
-                        if (perro.POS_X && perro.POS_Y) {
-                            const marker = L.marker([perro.POS_Y, perro.POS_X], { icon: perroIcon })
-                                .bindPopup(`
-                                    <b>${perro.NOMBRE}</b><br>
-                                    🆔 ${perro.IDENTIFICADOR}<br>
-                                    📍 ${perro.POS_Y.toFixed(5)}, ${perro.POS_X.toFixed(5)}<br>
-                                    🐕 Perro de caza
-                                `)
-                                .addTo(window.adminMap);
-                            
-                            marcadoresPerrosAdmin.set(perro.ID.toString(), marker);
+                    // Limpiar marcadores anteriores de perros (que no sean de socios monitoreados)
+                    marcadoresPerrosAdmin.forEach((marker, key) => {
+                        if (!key.startsWith('perro-')) {
+                            window.adminMap.removeLayer(marker);
+                            marcadoresPerrosAdmin.delete(key);
                         }
                     });
                     
-                    console.log(`✅ ${perros.length} perros cargados para el coto ${cotoInfo.nombre}`);
+                    // Agregar marcadores para perros sin socio o con socio fuera del coto
+                    const perrosIcon = L.divIcon({
+                        className: 'perro-marcador-secundario',
+                        html: `<div style="background: #ffa726; width: 18px; height: 18px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px;">🐕</div>`,
+                        iconSize: [22, 22],
+                        iconAnchor: [11, 11]
+                    });
                     
-                    // Actualizar estadísticas para incluir perros
-                    actualizarEstadisticasConPerros(perros.length);
+                    perros.forEach(perro => {
+                        if (perro.POS_X && perro.POS_Y) {
+                            // Verificar si este perro ya está mostrado como parte de un socio
+                            const perroYaMostrado = Array.from(marcadoresPerrosAdmin.keys())
+                                .some(key => key === `perro-${perro.ID}`);
+                            
+                            if (!perroYaMostrado) {
+                                const marker = L.marker([perro.POS_Y, perro.POS_X], { icon: perrosIcon })
+                                    .bindPopup(`
+                                        <b>🐕 ${perro.NOMBRE}</b><br>
+                                        🆔 ${perro.IDENTIFICADOR}<br>
+                                        📍 ${perro.POS_Y.toFixed(5)}, ${perro.POS_X.toFixed(5)}<br>
+                                        <small style="color: #666;">Perro del coto (sin socio en área)</small>
+                                    `)
+                                    .addTo(window.adminMap);
+                                
+                                marcadoresPerrosAdmin.set(`coto-perro-${perro.ID}`, marker);
+                            }
+                        }
+                    });
+                    
+                    console.log(`✅ ${perros.length} perros totales en el coto`);
                     
                 } catch (error) {
                     console.error('Error cargando perros del coto:', error);
@@ -3115,7 +3287,6 @@
                 }
             }
 
-            // ========== AÑADE AQUÍ LA LLAMADA INICIAL ==========
             // Cargar perros al iniciar
             cargarPerrosDelCoto();
 
@@ -3124,20 +3295,21 @@
                 if (!currentCotoId) return;
 
                 try {
-                    const response = await fetch(`/monitoreo/coto/${currentCotoId}/socios`);
+                    // Cambiar a la nueva ruta que incluye perros
+                    const response = await fetch(`/monitoreo/coto/${currentCotoId}/socios-con-perros`);
                     const data = await response.json();
                     
                     if (response.ok) {
                         actualizarListaSocios(data.socios);
                         actualizarMarcadoresEnMapa(data.socios);
-                        actualizarEstadisticas(data.totalSocios);
+                        actualizarEstadisticas(data.totalSocios, data.totalPerros);
                         
                         document.getElementById('statusMessage').textContent = 
-                            `Última actualización: ${new Date().toLocaleTimeString()}`;
+                            `Última actualización: ${new Date().toLocaleTimeString()} - ${data.totalSocios} socios, ${data.totalPerros} perros`;
                         document.getElementById('statusMessage').className = 'status-online';
                     }
                 } catch (error) {
-                    console.error('Error actualizando socios:', error);
+                    console.error('Error actualizando socios con perros:', error);
                     document.getElementById('statusMessage').textContent = 'Error de conexión';
                     document.getElementById('statusMessage').className = 'status-offline';
                 }
@@ -3155,6 +3327,27 @@
                     <div class="socio-item">
                         <div class="socio-name">${socio.nombre}</div>
                         <div class="socio-coords">📍 ${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}</div>
+                        
+                        ${socio.perros && socio.perros.length > 0 ? `
+                            <div style="margin-top: 8px; font-size: 0.85em;">
+                                <strong>🐕 Perros (${socio.perros.length}):</strong>
+                                ${socio.perros.map(perro => `
+                                    <div style="margin-left: 10px; margin-top: 4px; padding: 4px; background: #f8f9fa; border-radius: 4px;">
+                                        <span style="color: #333;">${perro.nombre}</span> 
+                                        (${perro.identificador})
+                                        ${perro.tieneUbicacion ? 
+                                            `<br><small style="color: #28a745;">📍 ${perro.pos_y.toFixed(5)}, ${perro.pos_x.toFixed(5)}</small>` : 
+                                            `<br><small style="color: #999;">📍 Sin ubicación</small>`
+                                        }
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #999;">
+                                Sin perros asignados
+                            </div>
+                        `}
+                        
                         <div class="socio-status status-dentro">✅ En el coto</div>
                     </div>
                 `).join('');
@@ -3167,19 +3360,91 @@
                 });
                 marcadoresSocios = {};
                 
+                // Limpiar marcadores anteriores de perros
+                marcadoresPerrosAdmin.forEach(marker => {
+                    if (marker) window.adminMap.removeLayer(marker);
+                });
+                marcadoresPerrosAdmin.clear();
+                
                 // Agregar nuevos marcadores
                 socios.forEach(socio => {
+                    // Marcador del socio
                     const marker = L.marker([socio.lat, socio.lng])
-                        .bindPopup(`<b>${socio.nombre}</b><br>📍 En el coto<br>${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}`)
+                        .bindPopup(generarPopupSocio(socio))
                         .addTo(window.adminMap);
                     
                     marcadoresSocios[socio.id] = marker;
+                    
+                    // Marcadores de perros de este socio (si tienen ubicación)
+                    if (socio.perros && socio.perros.length > 0) {
+                        socio.perros.forEach(perro => {
+                            if (perro.tieneUbicacion) {
+                                agregarMarcadorPerro(perro, socio);
+                            }
+                        });
+                    }
                 });
             }
 
-            function actualizarEstadisticas(totalSocios) {
+            // Nueva función para generar popup con información de socios y perros
+            function generarPopupSocio(socio) {
+                let contenido = `
+                    <b>👤 ${socio.nombre}</b><br>
+                    📍 En el coto<br>
+                    ${socio.lat.toFixed(5)}, ${socio.lng.toFixed(5)}
+                `;
+                
+                if (socio.perros && socio.perros.length > 0) {
+                    contenido += `<br><br><b>🐕 Perros (${socio.perros.length}):</b>`;
+                    socio.perros.forEach(perro => {
+                        contenido += `<br>• ${perro.nombre} (${perro.identificador})`;
+                        if (perro.tieneUbicacion) {
+                            contenido += ` - 📍 ${perro.pos_y.toFixed(5)}, ${perro.pos_x.toFixed(5)}`;
+                        }
+                    });
+                }
+                
+                return contenido;
+            }
+
+            // Nueva función para agregar marcadores de perros
+            function agregarMarcadorPerro(perro, socio) {
+                const perroIcon = L.divIcon({
+                    className: 'perro-marcador',
+                    html: `<div style="background: #ff6b35; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">🐕</div>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+                
+                const marker = L.marker([perro.pos_y, perro.pos_x], { icon: perroIcon })
+                    .bindPopup(`
+                        <b>🐕 ${perro.nombre}</b><br>
+                        🆔 ${perro.identificador}<br>
+                        👤 Propietario: ${socio.nombre}<br>
+                        📍 ${perro.pos_y.toFixed(5)}, ${perro.pos_x.toFixed(5)}
+                    `)
+                    .addTo(window.adminMap);
+                
+                marcadoresPerrosAdmin.set(`perro-${perro.id}`, marker);
+            }
+
+            function actualizarEstadisticas(totalSocios, totalPerros) {
                 document.getElementById('totalSocios').textContent = totalSocios;
                 document.getElementById('sociosEnCoto').textContent = totalSocios;
+                
+                // Actualizar o crear estadística de perros
+                let perrosStat = document.getElementById('totalPerros');
+                if (!perrosStat) {
+                    const statsDiv = document.querySelector('.stats');
+                    statsDiv.innerHTML += `
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalPerros">${totalPerros}</div>
+                            <div class="stat-label">Perros</div>
+                        </div>
+                    `;
+                } else {
+                    perrosStat.textContent = totalPerros;
+                }
             }
 
             function iniciarMonitoreo() {
@@ -3187,7 +3452,12 @@
                     clearInterval(intervaloMonitoreo);
                 }
                 
-                intervaloMonitoreo = setInterval(actualizarSociosEnCoto, 5000);
+                intervaloMonitoreo = setInterval(async () => {
+                    await actualizarSociosEnCoto();
+                    // También cargar perros generales del coto
+                    await cargarPerrosDelCoto();
+                }, 5000);
+                
                 document.getElementById('btnIniciarMonitoreoAdmin').style.display = 'none';
                 document.getElementById('btnDetenerMonitoreoAdmin').style.display = 'block';
                 document.getElementById('statusMessage').textContent = 'Monitoreo activo - Cargando...';
@@ -3195,6 +3465,7 @@
                 
                 // Primera actualización inmediata
                 actualizarSociosEnCoto();
+                cargarPerrosDelCoto();
             }
 
             function detenerMonitoreo() {
@@ -3223,8 +3494,6 @@
             document.getElementById('btnIniciarMonitoreoAdmin').addEventListener('click', iniciarMonitoreo);
             document.getElementById('btnDetenerMonitoreoAdmin').addEventListener('click', detenerMonitoreo);
 
-            // ========== AÑADE ESTO PARA ACTUALIZAR PERROS PERIÓDICAMENTE ==========
-            // Opcional: Si quieres actualizar perros periódicamente como los socios
             let intervaloPerros = null;
             
             function iniciarMonitoreoPerros() {

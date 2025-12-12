@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvTituloEditar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Editar Perro"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <EditText
+        android:id="@+id/etNombrePerroEditar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nombre del perro"
+        android:inputType="textCapWords"
+        android:maxLength="30"
+        android:padding="12dp"
+        android:background="@drawable/edittext_background" />
+
+    <EditText
+        android:id="@+id/etIdentificadorPerroEditar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Identificador único"
+        android:inputType="text"
+        android:maxLength="50"
+        android:padding="12dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/edittext_background" />
+
+    <TextView
+        android:id="@+id/tvUbicacionActual"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📍 Ubicación: cargando..."
+        android:textSize="12sp"
+        android:textColor="#666"
+        android:layout_marginTop="8dp"
+        android:padding="4dp" />
+
+    <Button
+        android:id="@+id/btnActualizarUbicacion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📍 Actualizar ubicación actual"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#2196F3" />
+
+</LinearLayout>

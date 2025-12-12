@@ -11,8 +11,8 @@ app.use(cors({
     origin: [
         'http://localhost:3000', 
         'http://127.0.0.1:3000',
-        'http://51.210.98.37:3000',
-        'http://venatus.es:3000',    
+        'http://venatus.es:3000',
+        'http://51.210.98.37:3000'
     ],
     credentials: true
 }));
@@ -24,7 +24,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const dbOptions = {
     host: "51.210.98.37",
     port: 3050,
-    database: "C:\\venatus\\VENATUS.FDB",
+    database: "C:\venatus\VENATUS.FDB",
     user: "SYSDBA",
     password: "masterkey",
     lowercase_keys: false,
@@ -210,7 +210,7 @@ app.post("/validar-login", async (req, res) => {
 
     try {
         const sqlSocio = `
-            SELECT ID, NOMBRE, USUARIO, EMAIL, TELEFONO 
+            SELECT ID, NOMBRE, USUARIO, EMAIL, TELEFONO, DNI 
             FROM SOCIOS 
             WHERE USUARIO = ? AND CLAVE = ?
         `;
@@ -231,7 +231,8 @@ app.post("/validar-login", async (req, res) => {
             nombre: socio.NOMBRE,
             usuario: socio.USUARIO,
             email: socio.EMAIL,
-            telefono: socio.TELEFONO
+            telefono: socio.TELEFONO,
+            dni: socio.DNI
         });
     } catch (error) {
         console.error('❌ Error en login socio:', error);
@@ -278,6 +279,29 @@ app.post("/registrar-socio", async (req, res) => {
     } catch (error) {
         console.error('❌ Error registrando socio:', error);
         res.status(500).json({ error: "Error al registrar socio en la base de datos" });
+    }
+});
+
+// Obtener todos los socios - CORREGIDO PARA INCLUIR DNI
+app.get("/socios", async (req, res) => {
+    console.log('🔍 Solicitando lista de socios');
+    
+    try {
+        const sql = "SELECT ID, NOMBRE, USUARIO, DNI FROM SOCIOS ORDER BY NOMBRE";
+        console.log('📋 Ejecutando SQL:', sql);
+        
+        const result = await ejecutarConsulta(sql);
+        console.log(`✅ ${result.length} socios encontrados`);
+        
+        // Agrega log para ver los datos
+        result.forEach(socio => {
+            console.log(`   👤 ID: ${socio.ID}, Nombre: ${socio.NOMBRE}, Usuario: ${socio.USUARIO}, DNI: ${socio.DNI || 'N/A'}`);
+        });
+        
+        res.json(result);
+    } catch (error) {
+        console.error('❌ Error obteniendo socios:', error);
+        res.status(500).json({ error: "Error al obtener socios", detalle: error.message });
     }
 });
 
@@ -371,33 +395,64 @@ app.get("/perros", async (req, res) => {
     }
 });
 
-// Obtener perros por coto
-app.get("/cotos/:id/perros", async (req, res) => {
-    const cotoId = req.params.id;
-    console.log(`🐕 Solicitando perros para coto: ${cotoId}`);
+// Obtener perros por socio
+app.get("/socios/:id/perros", async (req, res) => {
+    const socioId = req.params.id;
+    console.log(`🐕 Solicitando perros para socio: ${socioId}`);
 
     try {
         const sql = `
             SELECT p.ID, p.NOMBRE, p.IDENTIFICADOR, p.POS_X, p.POS_Y 
             FROM PERROS p
-            INNER JOIN COTO_PERROS cp ON p.ID = cp.ID_PERRO
-            WHERE cp.ID_COTO = ? AND p.ACTIVO = 1
+            INNER JOIN SOCIO_PERROS sp ON p.ID = sp.ID_PERRO
+            WHERE sp.ID_SOCIO = ? AND p.ACTIVO = 1
             ORDER BY p.NOMBRE
         `;
         
-        const result = await ejecutarConsulta(sql, [cotoId]);
-        console.log(`✅ Perros encontrados para coto ${cotoId}: ${result.length}`);
+        const result = await ejecutarConsulta(sql, [socioId]);
+        console.log(`✅ Perros encontrados para socio ${socioId}: ${result.length}`);
         res.json(result);
     } catch (error) {
-        console.error('❌ Error obteniendo perros del coto:', error);
-        res.status(500).json({ error: "Error al obtener perros del coto" });
+        console.error('❌ Error obteniendo perros del socio:', error);
+        res.status(500).json({ error: "Error al obtener perros del socio" });
+    }
+});
+
+// Obtener propietario de un perro específico
+app.get("/perros/:id/propietario", async (req, res) => {
+    const perroId = req.params.id;
+    console.log(`🔍 Solicitando propietario para perro ID: ${perroId}`);
+    
+    try {
+        const sql = "SELECT FIRST 1 ID_SOCIO FROM SOCIO_PERROS WHERE ID_PERRO = ?";
+        const result = await ejecutarConsulta(sql, [perroId]);
+        
+        if (result.length > 0) {
+            res.json({ 
+                success: true,
+                propietario: {
+                    ID_SOCIO: result[0].ID_SOCIO
+                }
+            });
+        } else {
+            res.json({ 
+                success: true,
+                propietario: null
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error obteniendo propietario del perro:', error);
+        res.status(500).json({ 
+            success: false,
+            error: "Error al obtener propietario del perro" 
+        });
     }
 });
 
 // Crear nuevo perro
 app.post("/perros", async (req, res) => {
-    const { nombre, identificador, pos_x, pos_y, idCoto } = req.body;
-    console.log(`🐕 Creando perro: ${nombre} - Identificador: ${identificador}`);
+    const { nombre, identificador, pos_x, pos_y, idSocio } = req.body;
+    console.log(`🐕 Creando perro: ${nombre} - Identificador: ${identificador} - Socio: ${idSocio}`);
 
     if (!nombre || !identificador) {
         return res.status(400).json({ error: "Nombre e identificador son obligatorios" });
@@ -430,24 +485,24 @@ app.post("/perros", async (req, res) => {
         const lastIdResult = await ejecutarConsulta(getLastIdSql, [identificador]);
         const perroId = lastIdResult[0].ID;
 
-        // Si se proporcionó un coto, asignar el perro al coto
-        if (idCoto) {
+        // Si se proporcionó un socio, asignar el perro al socio
+        if (idSocio) {
             try {
                 const asignarSql = `
-                    INSERT INTO COTO_PERROS (ID_COTO, ID_PERRO) 
+                    INSERT INTO SOCIO_PERROS (ID_SOCIO, ID_PERRO) 
                     VALUES (?, ?)
                 `;
-                await ejecutarConsulta(asignarSql, [idCoto, perroId]);
-                console.log(`✅ Perro asignado al coto ${idCoto}`);
+                await ejecutarConsulta(asignarSql, [idSocio, perroId]);
+                console.log(`✅ Perro asignado al socio ${idSocio}`);
             } catch (error) {
-                console.warn('⚠️ No se pudo asignar el perro al coto:', error.message);
+                console.warn('⚠️ No se pudo asignar el perro al socio:', error.message);
             }
         }
 
         console.log(`✅ Perro creado correctamente: ${nombre}`);
         res.json({ 
             success: true, 
-            message: "✅ Perro de caza creado correctamente",
+            mensaje: "✅ Perro de caza creado correctamente",
             id: perroId
         });
     } catch (error) {
@@ -459,7 +514,7 @@ app.post("/perros", async (req, res) => {
 // Actualizar perro
 app.put("/perros/:id", async (req, res) => {
     const perroId = req.params.id;
-    const { nombre, identificador, pos_x, pos_y, idCoto } = req.body;
+    const { nombre, identificador, pos_x, pos_y, idSocio } = req.body; // Cambiado de idCoto a idSocio
     console.log(`✏️ Actualizando perro ID: ${perroId}`);
 
     try {
@@ -496,20 +551,20 @@ app.put("/perros/:id", async (req, res) => {
             perroId
         ]);
 
-        // Si se proporcionó un coto, actualizar asignación
-        if (idCoto !== undefined) {
+        // Si se proporcionó un socio, actualizar asignación
+        if (idSocio !== undefined) {
             try {
                 // Eliminar asignaciones anteriores
-                const deleteAsignacionSql = "DELETE FROM COTO_PERROS WHERE ID_PERRO = ?";
+                const deleteAsignacionSql = "DELETE FROM SOCIO_PERROS WHERE ID_PERRO = ?";
                 await ejecutarConsulta(deleteAsignacionSql, [perroId]);
 
-                // Si idCoto no es null, crear nueva asignación
-                if (idCoto) {
-                    const asignarSql = "INSERT INTO COTO_PERROS (ID_COTO, ID_PERRO) VALUES (?, ?)";
-                    await ejecutarConsulta(asignarSql, [idCoto, perroId]);
-                    console.log(`✅ Perro reasignado al coto ${idCoto}`);
+                // Si idSocio no es null, crear nueva asignación
+                if (idSocio) {
+                    const asignarSql = "INSERT INTO SOCIO_PERROS (ID_SOCIO, ID_PERRO) VALUES (?, ?)";
+                    await ejecutarConsulta(asignarSql, [idSocio, perroId]);
+                    console.log(`✅ Perro reasignado al socio ${idSocio}`);
                 } else {
-                    console.log(`✅ Perro desasignado de todos los cotos`);
+                    console.log(`✅ Perro desasignado de todos los socios`);
                 }
             } catch (error) {
                 console.warn('⚠️ No se pudo actualizar asignación del perro:', error.message);
@@ -519,7 +574,7 @@ app.put("/perros/:id", async (req, res) => {
         console.log(`✅ Perro ${perroId} actualizado correctamente`);
         res.json({ 
             success: true, 
-            message: "✅ Perro de caza actualizado correctamente"
+            mensaje: "✅ Perro de caza actualizado correctamente"
         });
     } catch (error) {
         console.error('❌ Error actualizando perro:', error);
@@ -541,6 +596,29 @@ app.put("/perros/:id/estado", async (req, res) => {
     } catch (error) {
         console.error('❌ Error actualizando estado del perro:', error);
         res.status(500).json({ error: "Error al actualizar estado del perro" });
+    }
+});
+
+// Obtener perros por coto
+app.get("/cotos/:id/perros", async (req, res) => {
+    const cotoId = req.params.id;
+    console.log(`🐕 Solicitando perros para coto: ${cotoId}`);
+
+    try {
+        const sql = `
+            SELECT p.ID, p.NOMBRE, p.IDENTIFICADOR, p.POS_X, p.POS_Y 
+            FROM PERROS p
+            INNER JOIN COTO_PERROS cp ON p.ID = cp.ID_PERRO
+            WHERE cp.ID_COTO = ? AND p.ACTIVO = 1
+            ORDER BY p.NOMBRE
+        `;
+        
+        const result = await ejecutarConsulta(sql, [cotoId]);
+        console.log(`✅ Perros encontrados para coto ${cotoId}: ${result.length}`);
+        res.json(result);
+    } catch (error) {
+        console.error('❌ Error obteniendo perros del coto:', error);
+        res.status(500).json({ error: "Error al obtener perros del coto" });
     }
 });
 
@@ -573,15 +651,15 @@ app.post("/cotos/:id/asignar-perros", async (req, res) => {
     }
 });
 
-// Obtener ubicaciones de perros en tiempo real
+// Obtener ubicaciones de perros en tiempo real con información del socio
 app.get("/perros/ubicaciones", async (req, res) => {
     try {
         const sql = `
             SELECT p.ID, p.NOMBRE, p.IDENTIFICADOR, p.POS_X, p.POS_Y, 
-                   cp.ID_COTO, c.NOMBRE as COTO_NOMBRE
+                   sp.ID_SOCIO, s.NOMBRE as SOCIO_NOMBRE
             FROM PERROS p
-            LEFT JOIN COTO_PERROS cp ON p.ID = cp.ID_PERRO
-            LEFT JOIN COTOS c ON cp.ID_COTO = c.ID
+            LEFT JOIN SOCIO_PERROS sp ON p.ID = sp.ID_PERRO
+            LEFT JOIN SOCIOS s ON sp.ID_SOCIO = s.ID
             WHERE p.ACTIVO = 1 AND p.POS_X IS NOT NULL AND p.POS_Y IS NOT NULL
         `;
         
@@ -593,8 +671,8 @@ app.get("/perros/ubicaciones", async (req, res) => {
             identificador: perro.IDENTIFICADOR,
             lat: perro.POS_Y,
             lng: perro.POS_X,
-            cotoId: perro.ID_COTO,
-            cotoNombre: perro.COTO_NOMBRE || 'Sin asignar',
+            socioId: perro.ID_SOCIO,
+            socioNombre: perro.SOCIO_NOMBRE || 'Sin propietario asignado',
             timestamp: new Date().toISOString()
         }));
 
@@ -1114,6 +1192,98 @@ app.get("/monitoreo/coto/:cotoId/socios", async (req, res) => {
     }
 });
 
+// ========== SOCIOS CON PERROS POR COTO ==========
+
+app.get("/monitoreo/coto/:cotoId/socios-con-perros", async (req, res) => {
+    const cotoId = req.params.cotoId;
+    
+    try {
+        // 1. Obtener información del coto
+        const cotoSql = "SELECT ID, NOMBRE, CAST(PERIMETRO AS VARCHAR(8191)) AS PERIMETRO FROM COTOS WHERE ID = ?";
+        const cotoResult = await ejecutarConsulta(cotoSql, [cotoId]);
+
+        if (cotoResult.length === 0) {
+            return res.status(404).json({ error: "Coto no encontrado" });
+        }
+
+        const area = cotoResult[0];
+        const coordenadasCoto = parsearCoordenadas(area.PERIMETRO);
+        
+        if (coordenadasCoto.length === 0) {
+            return res.status(400).json({ error: "Coto sin coordenadas válidas" });
+        }
+
+        // 2. Filtrar socios que están dentro del coto
+        const todosSocios = Array.from(ubicacionesSocios.values());
+        const sociosEnCoto = todosSocios.filter(socio => {
+            let inside = false;
+            for (let i = 0, j = coordenadasCoto.length - 1; i < coordenadasCoto.length; j = i++) {
+                const xi = coordenadasCoto[i][1], yi = coordenadasCoto[i][0];
+                const xj = coordenadasCoto[j][1], yj = coordenadasCoto[j][0];
+                
+                const intersect = ((yi > socio.lat) !== (yj > socio.lat)) && 
+                                 (socio.lng < (xj - xi) * (socio.lat - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        });
+
+        // 3. Para cada socio en el coto, obtener sus perros
+        const sociosConPerros = await Promise.all(sociosEnCoto.map(async (socio) => {
+            try {
+                const perrosSql = `
+                    SELECT p.ID, p.NOMBRE, p.IDENTIFICADOR, p.POS_X, p.POS_Y 
+                    FROM PERROS p
+                    INNER JOIN SOCIO_PERROS sp ON p.ID = sp.ID_PERRO
+                    WHERE sp.ID_SOCIO = ? AND p.ACTIVO = 1
+                    ORDER BY p.NOMBRE
+                `;
+                
+                const perrosResult = await ejecutarConsulta(perrosSql, [socio.id]);
+                
+                return {
+                    ...socio,
+                    perros: perrosResult.map(perro => ({
+                        id: perro.ID,
+                        nombre: perro.NOMBRE,
+                        identificador: perro.IDENTIFICADOR,
+                        pos_x: perro.POS_X,
+                        pos_y: perro.POS_Y,
+                        tieneUbicacion: perro.POS_X !== null && perro.POS_Y !== null
+                    }))
+                };
+            } catch (error) {
+                console.error(`Error obteniendo perros para socio ${socio.id}:`, error);
+                return {
+                    ...socio,
+                    perros: [],
+                    errorPerros: error.message
+                };
+            }
+        }));
+
+        console.log(`✅ ${sociosConPerros.length} socios encontrados en el coto ${area.NOMBRE}`);
+        
+        // 4. Contar perros totales y con ubicación
+        const totalPerros = sociosConPerros.reduce((total, socio) => total + socio.perros.length, 0);
+        const perrosConUbicacion = sociosConPerros.reduce((total, socio) => 
+            total + socio.perros.filter(p => p.tieneUbicacion).length, 0);
+
+        res.json({
+            cotoId: cotoId,
+            cotoNombre: area.NOMBRE,
+            totalSocios: sociosConPerros.length,
+            totalPerros: totalPerros,
+            perrosConUbicacion: perrosConUbicacion,
+            socios: sociosConPerros,
+            ultimaActualizacion: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('❌ Error en monitoreo con perros:', error);
+        res.status(500).json({ error: "Error en el monitoreo" });
+    }
+});
+
 // ========== INICIALIZACIÓN Y DIAGNÓSTICO ==========
 
 app.post("/inicializar-datos", async (req, res) => {
@@ -1157,15 +1327,15 @@ app.post("/inicializar-datos", async (req, res) => {
                     END`
             },
             {
-                nombre: "COTO_PERROS",
-                sql: `CREATE TABLE COTO_PERROS (
+                nombre: "SOCIO_PERROS",
+                sql: `CREATE TABLE SOCIO_PERROS (
                     ID INTEGER NOT NULL PRIMARY KEY,
-                    ID_COTO INTEGER NOT NULL,
+                    ID_SOCIO INTEGER NOT NULL,
                     ID_PERRO INTEGER NOT NULL,
-                    FOREIGN KEY (ID_COTO) REFERENCES COTOS(ID),
+                    FOREIGN KEY (ID_SOCIO) REFERENCES SOCIOS(ID),
                     FOREIGN KEY (ID_PERRO) REFERENCES PERROS(ID)
                 )`,
-                trigger: `CREATE TRIGGER COTO_PERROS_BI FOR COTO_PERROS
+                trigger: `CREATE TRIGGER SOCIO_PERROS_BI FOR SOCIO_PERROS
                     ACTIVE BEFORE INSERT POSITION 0
                     AS
                     BEGIN
@@ -1257,7 +1427,7 @@ app.post("/inicializar-datos", async (req, res) => {
                 "INSERT INTO ANIMALES (NOMBRE, DESCRIPCION) VALUES ('Corzo', 'Corzo europeo')",
                 "INSERT INTO ANIMALES (NOMBRE, DESCRIPCION) VALUES ('Gamo', 'Gamo común')",
                 "INSERT INTO ANIMALES (NOMBRE, DESCRIPCION) VALUES ('Conejo', 'Conejo de monte')",
-                "INSERT INTO ANIMALES (NOMBRE, DESCRIPCION) VALUES ('Perdiz', 'Perdiz roja')"
+                "INSERT INTO ANIMALES (NOMBRE, DESCRIPCion) VALUES ('Perdiz', 'Perdiz roja')"
             ];
 
             for (const sql of insertAnimales) {

@@ -22,6 +22,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -63,6 +64,20 @@ class MainActivity : AppCompatActivity(), LocationListener {
         .build()
 
     private val SERVER_URL = "http://51.210.98.37:3000"
+
+    // ========== VARIABLES PARA PERROS ==========
+    private var listaPerrosUsuario: MutableList<JSONObject> = mutableListOf()
+    private var marcadoresPerros: MutableMap<Int, String> = mutableMapOf() // ID -> Script de marcador
+    private var monitoreoPerrosActivo = false
+    private var handlerMonitoreoPerros: Handler? = null
+    private val runnableMonitoreoPerros = object : Runnable {
+        override fun run() {
+            if (monitoreoPerrosActivo) {
+                actualizarUbicacionesPerros()
+                handlerMonitoreoPerros?.postDelayed(this, 15000) // Actualizar cada 15 segundos
+            }
+        }
+    }
 
     // ========== MANEJO DE UBICACIÓN ==========
     private val ubicacionUpdateHandler = Handler(Looper.getMainLooper())
@@ -116,6 +131,13 @@ class MainActivity : AppCompatActivity(), LocationListener {
             locationManager.removeUpdates(this)
             unregisterReceiver(gpsReceiver)
             ubicacionUpdateHandler.removeCallbacks(enviarUbicacionRunnable)
+
+            // Detener monitoreo de perros
+            detenerMonitoreoPerros()
+
+            // Limpiar marcadores de perros
+            webView.evaluateJavascript("javascript:limpiarMarcadoresPerros()", null)
+
             progressDialog?.dismiss()
         } catch (e: Exception) {
             Log.e("MAIN", "Error en onDestroy: ${e.message}")
@@ -172,15 +194,549 @@ class MainActivity : AppCompatActivity(), LocationListener {
         webView.loadUrl("file:///android_asset/mapa_limpio.html")
     }
 
+    // ========== GESTIÓN DE PERROS ==========
+
+    private fun mostrarMenuPerros() {
+        val opciones = arrayOf(
+            "📋 Ver mis perros",
+            "➕ Registrar nuevo perro",
+            "📍 Actualizar ubicación de perros",
+            "🗺️ Mostrar perros en mapa",
+            "🔄 Iniciar monitoreo automático",
+            "⏹️ Detener monitoreo"
+        )
+
+        AlertDialog.Builder(this)
+            .setTitle("🐕 Gestión de Perros")
+            .setItems(opciones) { dialog, which ->
+                when (which) {
+                    0 -> cargarMisPerros()
+                    1 -> mostrarDialogoNuevoPerro()
+                    2 -> actualizarUbicacionMisPerros()
+                    3 -> mostrarPerrosEnMapa()
+                    4 -> iniciarMonitoreoPerros()
+                    5 -> detenerMonitoreoPerros()
+                }
+            }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    private fun cargarMisPerros() {
+        val idUsuario = intent.getIntExtra("idUsuario", 0)
+        if (idUsuario == 0) {
+            Toast.makeText(this, "Error: Usuario no identificado", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        showProgressDialog("Cargando tus perros...")
+        val url = "$SERVER_URL/socios/$idUsuario/perros"
+        Log.d("PERROS", "🔍 Solicitando perros desde: $url")
+
+        val request = Request.Builder().url(url).build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread {
+                    dismissProgressDialog()
+                    Toast.makeText(this@MainActivity, "Error de conexión: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Log.e("PERROS", "❌ Error conexión: ${e.message}")
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val respuesta = response.body?.string()
+                Log.d("PERROS", "📥 Respuesta perros - Código: ${response.code}")
+                Log.d("PERROS", "📥 Respuesta: $respuesta")
+
+                runOnUiThread {
+                    dismissProgressDialog()
+                    try {
+                        if (response.isSuccessful) {
+                            val perrosArray = JSONArray(respuesta)
+                            listaPerrosUsuario.clear()
+
+                            for (i in 0 until perrosArray.length()) {
+                                val perro = perrosArray.getJSONObject(i)
+                                listaPerrosUsuario.add(perro)
+                            }
+
+                            Log.d("PERROS", "✅ ${listaPerrosUsuario.size} perros cargados")
+                            mostrarListaPerrosDialog()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Error cargando perros: ${response.code}", Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        Log.e("PERROS", "❌ Error procesando perros: ${e.message}")
+                        Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        })
+    }
+
+    private fun mostrarListaPerrosDialog() {
+        if (listaPerrosUsuario.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("Mis Perros")
+                .setMessage("No tienes perros registrados. ¿Deseas añadir uno?")
+                .setPositiveButton("➕ Añadir perro") { dialog, which -> mostrarDialogoNuevoPerro() }
+                .setNegativeButton("Cancelar", null)
+                .show()
+            return
+        }
+
+        val perrosNombres = mutableListOf<String>()
+        listaPerrosUsuario.forEachIndexed { index, perro ->
+            val nombre = perro.getString("NOMBRE")
+            val identificador = perro.getString("IDENTIFICADOR")
+            val tieneUbicacion = perro.optDouble("POS_X", 0.0) != 0.0 && perro.optDouble("POS_Y", 0.0) != 0.0
+
+            perrosNombres.add("${index + 1}. $nombre ($identificador) ${if (tieneUbicacion) "📍" else "❌"}")
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("🐕 Mis Perros (${listaPerrosUsuario.size})")
+            .setItems(perrosNombres.toTypedArray()) { dialog, which ->
+                val perroSeleccionado = listaPerrosUsuario[which]
+                mostrarOpcionesPerro(perroSeleccionado)
+            }
+            .setPositiveButton("➕ Añadir otro") { dialog, which -> mostrarDialogoNuevoPerro() }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    private fun mostrarOpcionesPerro(perro: JSONObject) {
+        val perroId = perro.getInt("ID")
+        val perroNombre = perro.getString("NOMBRE")
+
+        val opciones = arrayOf(
+            "✏️ Editar información",
+            "📍 Actualizar ubicación",
+            "🗺️ Mostrar en mapa",
+            "🗑️ Eliminar perro"
+        )
+
+        AlertDialog.Builder(this)
+            .setTitle("Opciones para: $perroNombre")
+            .setItems(opciones) { dialog, which ->
+                when (which) {
+                    0 -> mostrarDialogoEditarPerro(perro)
+                    1 -> actualizarUbicacionPerro(perroId, perroNombre)
+                    2 -> mostrarPerroEnMapa(perro)
+                    3 -> confirmarEliminarPerro(perroId, perroNombre)
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun mostrarDialogoNuevoPerro() {
+        val view = layoutInflater.inflate(R.layout.dialog_nuevo_perro, null)
+        val etNombre = view.findViewById<EditText>(R.id.etNombrePerro)
+        val etIdentificador = view.findViewById<EditText>(R.id.etIdentificadorPerro)
+
+        AlertDialog.Builder(this)
+            .setTitle("➕ Registrar Nuevo Perro")
+            .setView(view)
+            .setPositiveButton("Registrar") { dialog, which ->
+                val nombre = etNombre.text.toString().trim()
+                val identificador = etIdentificador.text.toString().trim()
+
+                if (nombre.isEmpty() || identificador.isEmpty()) {
+                    Toast.makeText(this, "Nombre e identificador son obligatorios", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                registrarNuevoPerro(nombre, identificador)
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun registrarNuevoPerro(nombre: String, identificador: String) {
+        val idUsuario = intent.getIntExtra("idUsuario", 0)
+        if (idUsuario == 0) {
+            Toast.makeText(this, "Error: Usuario no identificado", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        showProgressDialog("Registrando perro...")
+
+        // Obtener ubicación actual para el perro
+        val ubicacion = obtenerUbicacionActual()
+        val posX = ubicacion?.longitude ?: 0.0
+        val posY = ubicacion?.latitude ?: 0.0
+
+        val url = "$SERVER_URL/socios/$idUsuario/perros"
+        val json = JSONObject().apply {
+            put("nombre", nombre)
+            put("identificador", identificador)
+            put("pos_x", posX)
+            put("pos_y", posY)
+        }
+
+        Log.d("PERROS", "📤 Registrando perro: $nombre")
+        Log.d("PERROS", "📤 JSON: ${json.toString()}")
+
+        val body = RequestBody.create("application/json; charset=utf-8".toMediaType(), json.toString())
+        val request = Request.Builder().url(url).post(body).build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread {
+                    dismissProgressDialog()
+                    Toast.makeText(this@MainActivity, "Error de conexión: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Log.e("PERROS", "❌ Error registro: ${e.message}")
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val respuesta = response.body?.string()
+                Log.d("PERROS", "📥 Respuesta registro - Código: ${response.code}")
+                Log.d("PERROS", "📥 Respuesta: $respuesta")
+
+                runOnUiThread {
+                    dismissProgressDialog()
+                    try {
+                        if (response.isSuccessful) {
+                            val jsonResponse = JSONObject(respuesta)
+                            val mensaje = jsonResponse.getString("message")
+
+                            Toast.makeText(
+                                this@MainActivity,
+                                "✅ $mensaje\n📍 Ubicación: ${if (ubicacion != null) "Registrada" else "No disponible"}",
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                            // Recargar lista de perros
+                            cargarMisPerros()
+                        } else {
+                            val errorJson = JSONObject(respuesta)
+                            val errorMsg = errorJson.optString("error", "Error desconocido")
+                            Toast.makeText(this@MainActivity, "❌ $errorMsg", Toast.LENGTH_LONG).show()
+                        }
+                    } catch (e: Exception) {
+                        Log.e("PERROS", "❌ Error parseando respuesta: ${e.message}")
+                        Toast.makeText(this@MainActivity, "Error procesando respuesta", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        })
+    }
+
+    private fun mostrarDialogoEditarPerro(perro: JSONObject) {
+        val view = layoutInflater.inflate(R.layout.dialog_editar_perro, null)
+        val etNombre = view.findViewById<EditText>(R.id.etNombrePerroEditar)
+        val etIdentificador = view.findViewById<EditText>(R.id.etIdentificadorPerroEditar)
+        val tvUbicacion = view.findViewById<TextView>(R.id.tvUbicacionActual)
+        val btnActualizarUbicacion = view.findViewById<Button>(R.id.btnActualizarUbicacion)
+
+        // Rellenar con datos actuales
+        etNombre.setText(perro.getString("NOMBRE"))
+        etIdentificador.setText(perro.getString("IDENTIFICADOR"))
+
+        val posX = perro.optDouble("POS_X", 0.0)
+        val posY = perro.optDouble("POS_Y", 0.0)
+        val ubicacionTexto = if (posX != 0.0 && posY != 0.0) {
+            "📍 Ubicación registrada: ${String.format("%.5f", posY)}, ${String.format("%.5f", posX)}"
+        } else {
+            "📍 Sin ubicación registrada"
+        }
+        tvUbicacion.text = ubicacionTexto
+
+        btnActualizarUbicacion.setOnClickListener {
+            actualizarUbicacionPerro(perro.getInt("ID"), perro.getString("NOMBRE"))
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("✏️ Editar: ${perro.getString("NOMBRE")}")
+            .setView(view)
+            .setPositiveButton("Guardar") { dialog, which ->
+                val nuevoNombre = etNombre.text.toString().trim()
+                val nuevoIdentificador = etIdentificador.text.toString().trim()
+
+                if (nuevoNombre.isEmpty() || nuevoIdentificador.isEmpty()) {
+                    Toast.makeText(this, "Nombre e identificador son obligatorios", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                // TODO: Implementar actualización de perro en el backend
+                Toast.makeText(this, "Función de edición en desarrollo", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun actualizarUbicacionPerro(perroId: Int, perroNombre: String) {
+        val ubicacion = obtenerUbicacionActual()
+        if (ubicacion == null) {
+            Toast.makeText(this, "No se pudo obtener ubicación actual", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        showProgressDialog("Actualizando ubicación...")
+
+        val url = "$SERVER_URL/perros/$perroId/ubicacion"
+        val json = JSONObject().apply {
+            put("pos_x", ubicacion.longitude)
+            put("pos_y", ubicacion.latitude)
+        }
+
+        val body = RequestBody.create("application/json; charset=utf-8".toMediaType(), json.toString())
+        val request = Request.Builder().url(url).put(body).build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread {
+                    dismissProgressDialog()
+                    Toast.makeText(this@MainActivity, "Error de conexión", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val respuesta = response.body?.string()
+                runOnUiThread {
+                    dismissProgressDialog()
+                    try {
+                        if (response.isSuccessful) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "✅ Ubicación de $perroNombre actualizada\n📍 ${String.format("%.5f", ubicacion.latitude)}, ${String.format("%.5f", ubicacion.longitude)}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            // Recargar perros para reflejar cambios
+                            cargarMisPerros()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Error actualizando ubicación", Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        })
+    }
+
+    private fun actualizarUbicacionMisPerros() {
+        if (listaPerrosUsuario.isEmpty()) {
+            Toast.makeText(this, "No tienes perros registrados", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val ubicacion = obtenerUbicacionActual()
+        if (ubicacion == null) {
+            Toast.makeText(this, "No se pudo obtener ubicación actual", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        showProgressDialog("Actualizando ubicación de todos los perros...")
+
+        // Actualizar cada perro
+        var perrosActualizados = 0
+        val totalPerros = listaPerrosUsuario.size
+
+        listaPerrosUsuario.forEachIndexed { index, perro ->
+            val perroId = perro.getInt("ID")
+            val url = "$SERVER_URL/perros/$perroId/ubicacion"
+            val json = JSONObject().apply {
+                put("pos_x", ubicacion.longitude)
+                put("pos_y", ubicacion.latitude)
+            }
+
+            val body = RequestBody.create("application/json; charset=utf-8".toMediaType(), json.toString())
+            val request = Request.Builder().url(url).put(body).build()
+
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.e("PERROS", "Error actualizando perro $perroId: ${e.message}")
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    perrosActualizados++
+                    if (perrosActualizados == totalPerros) {
+                        runOnUiThread {
+                            dismissProgressDialog()
+                            Toast.makeText(
+                                this@MainActivity,
+                                "✅ Ubicación actualizada para $perrosActualizados/$totalPerros perros",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            cargarMisPerros()
+                        }
+                    }
+                }
+            })
+        }
+    }
+
+    private fun mostrarPerroEnMapa(perro: JSONObject) {
+        val posX = perro.optDouble("POS_X", 0.0)
+        val posY = perro.optDouble("POS_Y", 0.0)
+        val nombre = perro.getString("NOMBRE")
+        val identificador = perro.getString("IDENTIFICADOR")
+
+        if (posX == 0.0 || posY == 0.0) {
+            Toast.makeText(this, "Este perro no tiene ubicación registrada", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Limpiar marcadores anteriores
+        webView.evaluateJavascript("javascript:limpiarMarcadoresPerros()", null)
+
+        // Añadir marcador del perro
+        val script = """
+        javascript:agregarMarcadorPerro(
+            $posY, 
+            $posX, 
+            "$nombre", 
+            "$identificador",
+            "#FF6B35"
+        )
+    """.trimIndent()
+
+        webView.evaluateJavascript(script, null)
+
+        // Centrar en el perro
+        webView.evaluateJavascript("javascript:centrarEnUbicacion($posY, $posX)", null)
+
+        Toast.makeText(this, "📍 Mostrando $nombre en el mapa", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun mostrarPerrosEnMapa() {
+        if (listaPerrosUsuario.isEmpty()) {
+            Toast.makeText(this, "No tienes perros registrados", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Limpiar marcadores anteriores
+        webView.evaluateJavascript("javascript:limpiarMarcadoresPerros()", null)
+
+        // Contar perros con ubicación
+        var perrosConUbicacion = 0
+        val boundsScript = StringBuilder()
+
+        listaPerrosUsuario.forEach { perro ->
+            val posX = perro.optDouble("POS_X", 0.0)
+            val posY = perro.optDouble("POS_Y", 0.0)
+            val nombre = perro.getString("NOMBRE")
+            val identificador = perro.getString("IDENTIFICADOR")
+
+            if (posX != 0.0 && posY != 0.0) {
+                perrosConUbicacion++
+
+                val script = """
+                javascript:agregarMarcadorPerro(
+                    $posY, 
+                    $posX, 
+                    "$nombre", 
+                    "$identificador",
+                    "#FF6B35"
+                )
+            """.trimIndent()
+
+                webView.evaluateJavascript(script, null)
+
+                // Añadir coordenada para calcular bounds
+                if (boundsScript.isNotEmpty()) boundsScript.append(",")
+                boundsScript.append("[$posY, $posX]")
+            }
+        }
+
+        if (perrosConUbicacion > 0) {
+            // Ajustar vista para mostrar todos los perros
+            val boundsArray = "[${boundsScript.toString()}]"
+            webView.evaluateJavascript("javascript:ajustarVistaAPuntos($boundsArray)", null)
+
+            Toast.makeText(
+                this,
+                "🗺️ Mostrando $perrosConUbicacion/${listaPerrosUsuario.size} perros en el mapa",
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            Toast.makeText(this, "Ninguno de tus perros tiene ubicación registrada", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun confirmarEliminarPerro(perroId: Int, perroNombre: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Eliminar Perro")
+            .setMessage("¿Estás seguro de eliminar a $perroNombre?\nEsta acción no se puede deshacer.")
+            .setPositiveButton("Eliminar") { dialog, which ->
+                // TODO: Implementar eliminación de perro en el backend
+                Toast.makeText(this, "Función de eliminación en desarrollo", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun iniciarMonitoreoPerros() {
+        if (listaPerrosUsuario.isEmpty()) {
+            Toast.makeText(this, "No tienes perros registrados", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        monitoreoPerrosActivo = true
+        handlerMonitoreoPerros = Handler(Looper.getMainLooper())
+        handlerMonitoreoPerros?.post(runnableMonitoreoPerros)
+
+        Toast.makeText(this, "🔄 Monitoreo automático de perros iniciado", Toast.LENGTH_LONG).show()
+        Log.d("PERROS", "✅ Monitoreo automático iniciado")
+    }
+
+    private fun detenerMonitoreoPerros() {
+        monitoreoPerrosActivo = false
+        handlerMonitoreoPerros?.removeCallbacks(runnableMonitoreoPerros)
+        handlerMonitoreoPerros = null
+
+        Toast.makeText(this, "⏹️ Monitoreo de perros detenido", Toast.LENGTH_SHORT).show()
+        Log.d("PERROS", "❌ Monitoreo detenido")
+    }
+
+    private fun actualizarUbicacionesPerros() {
+        val idUsuario = intent.getIntExtra("idUsuario", 0)
+        if (idUsuario == 0) return
+
+        val url = "$SERVER_URL/socios/$idUsuario/perros"
+        val request = Request.Builder().url(url).build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.d("PERROS", "❌ Error actualizando perros: ${e.message}")
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val respuesta = response.body?.string()
+                try {
+                    if (response.isSuccessful) {
+                        val perrosArray = JSONArray(respuesta)
+
+                        runOnUiThread {
+                            // Actualizar lista local
+                            listaPerrosUsuario.clear()
+                            for (i in 0 until perrosArray.length()) {
+                                listaPerrosUsuario.add(perrosArray.getJSONObject(i))
+                            }
+
+                            Log.d("PERROS", "✅ ${listaPerrosUsuario.size} perros actualizados")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("PERROS", "❌ Error procesando actualización: ${e.message}")
+                }
+            }
+        })
+    }
+
     // ========== MENÚ PRINCIPAL ==========
     private fun mostrarMenuFlotante() {
-
         val opciones = arrayOf(
             "🌿 Cargar Cotos",
             "➕ Aumentar Zoom",
             "➖ Reducir Zoom",
             "🗑️ Limpiar Mapa",
             "📍 Centrar en mi ubicación",
+            "🐕 Mis Perros de Caza", // NUEVA OPCIÓN
             "🐾 Ver Animales del Coto",
             "🎯 Registrar Animal Cazado",
             "📋 Mi Historial de Capturas",
@@ -196,10 +752,11 @@ class MainActivity : AppCompatActivity(), LocationListener {
                     2 -> ejecutarZoomOut()
                     3 -> limpiarMapa()
                     4 -> centrarEnMiUbicacion()
-                    5 -> verAnimalesDelCoto()
-                    6 -> registrarAnimalCazado()
-                    7 -> verHistorialCapturas()
-                    8 -> mostrarAcercaDe()
+                    5 -> mostrarMenuPerros() // Nueva función
+                    6 -> verAnimalesDelCoto()
+                    7 -> registrarAnimalCazado()
+                    8 -> verHistorialCapturas()
+                    9 -> mostrarAcercaDe()
                 }
             }
             .setNegativeButton("Cerrar", null)
