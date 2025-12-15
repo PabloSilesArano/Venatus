@@ -2,7 +2,7 @@
 
 ## Índice
 
-1. [Introducción](#introducción)
+1. [Introducción](#Introducción)
 2. [Acceso al Sistema](#acceso-al-sistema)
 3. [Aplicación Android para Socios](#aplicación-android-para-socios)
 4. [Panel Web para Super Administrador](#panel-web-para-super-administrador)
