@@ -38,9 +38,6 @@ const ubicacionesSocios = new Map();
 
 // ========== FUNCIONES UTILITARIAS ==========
 
-/**
- * Parsea coordenadas desde texto a array de coordenadas
- */
 function parsearCoordenadas(perimetroTexto) {
     if (!perimetroTexto) {
         console.log("❌ Texto de perímetro vacío");
@@ -83,9 +80,6 @@ function parsearCoordenadas(perimetroTexto) {
     return coordenadas;
 }
 
-/**
- * Ejecuta consultas en la base de datos Firebird
- */
 function ejecutarConsulta(sql, params = []) {
     return new Promise((resolve, reject) => {
         Firebird.attach(dbOptions, (err, db) => {

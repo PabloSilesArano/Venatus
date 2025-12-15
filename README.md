@@ -2,11 +2,18 @@
 
 ## Descripción del Proyecto
 
-**Venatus** es una solución completa desarrollada para la **gestión integral** de cotos de caza, incluyendo monitoreo en tiempo real, registro de capturas y administración de especies mediante una **aplicación Android nativa** y un **panel web administrativo avanzado**.
+**Venatus** es una solución completa desarrollada para la **gestión integral** de cotos de caza, incluyendo monitoreo en tiempo real, registro de capturas, gestión de perros de caza y administración de especies mediante una **aplicación Android nativa** y un **panel web administrativo avanzado**.
 
 ---
 
-## ✨ Novedades del proyecto
+## ✨ Novedades del Proyecto (Actualización)
+
+### 🐕 **Sistema Completo de Gestión de Perros de Caza**
+- **Registro y gestión de perros** asignados a socios
+- **Monitoreo en tiempo real** de ubicación de perros
+- **Paneles dedicados** en SuperAdmin, Admin de Coto y App Android
+- **Marcadores diferenciados** en mapas para visualización de perros
+- **Estadísticas combinadas** (socios + perros) en tiempo real
 
 ### 🔄 **Modificación Avanzada de Cotos**
 - **Edición visual en tiempo real** de polígonos de caza
@@ -38,24 +45,38 @@
 - **Gestión de inventario** de especies por área de caza
 - **Estadísticas y reportes** de actividad cinegética
 
+### 🐕 Sistema de Perros de Caza
+- **Registro completo** de perros con identificador único
+- **Asignación a socios** propietarios
+- **Monitoreo GPS** en tiempo real de perros activos
+- **Visualización en mapas** con iconos personalizados
+- **Gestión multi-plataforma** (Web SuperAdmin, Web Admin Coto, Android)
+
 ### 📱 Aplicación Android
 - **Autenticación segura** de socios y administradores
 - **Monitoreo en tiempo real** de ubicación GPS
 - **Detección automática** de entrada/salida de cotos
 - **Registro inmediato** de animales cazados
+- **Gestión completa** de perros propios
 - **Interfaz intuitiva** con mapa interactivo
 - **Notificaciones visuales** de estado
 - **Envío periódico** de ubicación al servidor
 - **Historial personal** de capturas
 
 ### 🖥️ Panel Web Administrativo
+#### Super Administrador
 - **Gestión visual** de cotos mediante dibujo en mapa
 - **Registro y administración** de socios y administradores
 - **Monitoreo en tiempo real** de todos los socios activos
-- **Gestión de especies** y asignación a cotos
+- **Gestión completa de perros** (CRUD, asignación, monitoreo)
+- **Modificación avanzada** de polígonos de cotos
 - **Base de datos Firebird** integrada
-- **Interfaz responsive** y moderna
-- **Reportes avanzados** de actividad
+
+#### Administrador de Coto
+- **Monitoreo combinado** de socios y perros en su coto
+- **Visualización diferenciada** en mapa (socios 👤, perros 🐕)
+- **Estadísticas actualizadas** incluyendo conteo de perros
+- **Panel de control específico** para su área asignada
 
 ---
 
@@ -63,32 +84,48 @@
 
 ### Backend (Node.js + Express)
 - **API RESTful** con arquitectura modular
+- **Endpoints específicos** para gestión de perros
 - **Middleware** de autenticación por roles
 - **Validación de datos** en todas las entradas
 - **Manejo de errores** estructurado
 - **Logs detallados** para auditoría
 - **CORS configurado** para múltiples orígenes
 
-### Base de Datos (Firebird)
-- **Esquema relacional** optimizado
-- **Triggers** para integridad referencial
-- **Generadores** para auto-incremento
-- **Índices** para consultas rápidas
-- **Backup automático** recomendado
+### Base de Datos (Firebird) - Tablas Nuevas
+```sql
+-- Tabla de perros de caza
+CREATE TABLE PERROS (
+    ID INTEGER NOT NULL PRIMARY KEY,
+    NOMBRE VARCHAR(30) NOT NULL,
+    IDENTIFICADOR VARCHAR(50) NOT NULL UNIQUE,
+    POS_X DOUBLE PRECISION,
+    POS_Y DOUBLE PRECISION,
+    ACTIVO INTEGER DEFAULT 1
+);
 
-### Frontend Web
-- **Leaflet.js + Leaflet Draw** para mapas interactivos
-- **JavaScript modular** con funciones específicas
-- **CSS3 con Grid/Flexbox** para diseño responsive
-- **Eventos delegados** para mejor rendimiento
-- **Paneles modales** para gestión específica
+-- Relación socios-perros
+CREATE TABLE SOCIO_PERROS (
+    ID INTEGER NOT NULL PRIMARY KEY,
+    ID_SOCIO INTEGER NOT NULL,
+    ID_PERRO INTEGER NOT NULL,
+    FOREIGN KEY (ID_SOCIO) REFERENCES SOCIOS(ID),
+    FOREIGN KEY (ID_PERRO) REFERENCES PERROS(ID)
+);
+```
 
-### Mobile (Android Kotlin)
-- **Arquitectura MVVM** para separación de responsabilidades
-- **Coroutines** para operaciones asíncronas
-- **Material Design 3** para interfaz moderna
-- **Servicios en segundo plano** para ubicación
-- **Permisos dinámicos** Android 6.0+
+### Frontend Web - Nuevas Funcionalidades
+- **Panel de gestión de perros** en SuperAdmin
+- **Sistema de monitoreo** en tiempo real de perros
+- **Select dinámico** de socios para asignación de perros
+- **Iconos personalizados** para marcadores de perros
+- **Estadísticas actualizadas** incluyendo conteo de perros
+
+### Mobile (Android Kotlin) - Nuevas Funcionalidades
+- **Menú específico** para gestión de perros
+- **Diálogos de registro/edición** de perros
+- **Visualización en mapa** con marcadores especiales
+- **Monitoreo automático** de ubicación de perros
+- **Actualización automática** de lista de perros
 
 ---
 
@@ -130,13 +167,16 @@ Venatus/
 │   │   │   │   ├── LocationService.kt
 │   │   │   │   └── utils/
 │   │   │   │       ├── NetworkHelper.kt
-│   │   │   │       └── PermissionManager.kt
+│   │   │   │       ├── PermissionManager.kt
+│   │   │   │       └── DogManager.kt         
 │   │   │   ├── res/
 │   │   │   │   ├── layout/
 │   │   │   │   │   ├── activity_login.xml
 │   │   │   │   │   ├── activity_main.xml
 │   │   │   │   │   ├── fragment_map.xml
-│   │   │   │   │   └── dialog_cantidad.xml
+│   │   │   │   │   ├── dialog_cantidad.xml
+│   │   │   │   │   ├── dialog_nuevo_perro.xml   
+│   │   │   │   │   └── dialog_editar_perro.xml  
 │   │   │   │   ├── values/
 │   │   │   │   │   ├── strings.xml
 │   │   │   │   │   ├── colors.xml
@@ -163,21 +203,25 @@ Venatus/
 │   │   ├── auth.js
 │   │   ├── cotos.js
 │   │   ├── socios.js
-│   │   └── admin.js
+│   │   ├── admin.js
+│   │   └── perros.js     
 │   └── utils/
 │       ├── database.js
-│       └── validators.js
+│       ├── validators.js
+│       └── geofencing.js   
 ├── 🗄️ database/
 │   ├── schema_venatus.sql
 │   ├── sample_data.sql
 │   ├── triggers.sql
-│   └── views.sql
+│   ├── views.sql
+│   └── perros_schema.sql     
 ├── 📚 documentation/
 │   ├── API_Documentation.md
 │   ├── Database_Schema.md
 │   ├── Installation_Guide.md
 │   ├── User_Manual_Socio.md
 │   ├── User_Manual_Admin.md
+│   ├── Dog_Management_Guide.md 
 │   └── Technical_Specifications.md
 └── 🔧 scripts/
     ├── backup_database.sh
@@ -211,7 +255,7 @@ npm install
 cp .env.example .env
 # Editar .env con tus credenciales
 
-# 4. Inicializar base de datos
+# 4. Inicializar base de datos (incluye tablas de perros)
 npm run init-db
 
 # 5. Iniciar servidor
@@ -238,7 +282,7 @@ npx http-server -p 8080
 # Opción 3: Live Server de VS Code
 ```
 
-Acceder a **http://localhost:8080**
+Acceder a **http://venatus.es:3000**
 
 ---
 
@@ -249,7 +293,7 @@ File → Open → Seleccionar venatus/android-app
 
 # 2. Configurar URL del servidor
 # Editar: app/src/main/res/values/strings.xml
-<string name="server_url">http://TU_IP:3000</string>
+<string name="server_url">http://51.210.98.37:3000</string>
 
 # 3. Sincronizar Gradle
 File → Sync Project with Gradle Files
@@ -262,7 +306,7 @@ Run → Run 'app'
 
 ---
 
-## 🗃️ Configuración de Base de Datos
+## 🗃️ Configuración de Base de Datos Actualizada
 
 ### 1. Estructura de Tablas Actualizada
 ```sql
@@ -281,15 +325,37 @@ CREATE TABLE COTOS (
 CREATE TABLE SOCIOS (
     ID INTEGER NOT NULL PRIMARY KEY,
     NOMBRE VARCHAR(50) NOT NULL,
-    DNI VARCHAR(20) UNIQUE,  -- NUEVO CAMPO
+    DNI VARCHAR(20) UNIQUE,
     TELEFONO VARCHAR(20),
     USUARIO VARCHAR(20) UNIQUE NOT NULL,
-    CLAVE VARCHAR(100) NOT NULL,  -- Aumentado para hashes
+    CLAVE VARCHAR(100) NOT NULL,
     EMAIL VARCHAR(100) UNIQUE,
     POSICION_X DOUBLE PRECISION,
     POSICION_Y DOUBLE PRECISION,
     ACTIVO INTEGER DEFAULT 1,
     FECHA_REGISTRO TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de perros de caza
+CREATE TABLE PERROS (
+    ID INTEGER NOT NULL PRIMARY KEY,
+    NOMBRE VARCHAR(30) NOT NULL,
+    IDENTIFICADOR VARCHAR(50) NOT NULL UNIQUE,
+    POS_X DOUBLE PRECISION,
+    POS_Y DOUBLE PRECISION,
+    ACTIVO INTEGER DEFAULT 1,
+    FECHA_REGISTRO TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Relación socios-perros
+CREATE TABLE SOCIO_PERROS (
+    ID INTEGER NOT NULL PRIMARY KEY,
+    ID_SOCIO INTEGER NOT NULL,
+    ID_PERRO INTEGER NOT NULL,
+    FECHA_ASIGNACION TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ID_SOCIO) REFERENCES SOCIOS(ID) ON DELETE CASCADE,
+    FOREIGN KEY (ID_PERRO) REFERENCES PERROS(ID) ON DELETE CASCADE,
+    UNIQUE (ID_PERRO) -- Un perro solo puede tener un dueño
 );
 
 -- Tabla de especies animales
@@ -298,7 +364,7 @@ CREATE TABLE ANIMALES (
     NOMBRE VARCHAR(50) NOT NULL,
     DESCRIPCION VARCHAR(255),
     ACTIVO INTEGER DEFAULT 1,
-    ICONO VARCHAR(50)  -- Para representación visual
+    ICONO VARCHAR(50)
 );
 
 -- Relación de animales por coto
@@ -307,7 +373,7 @@ CREATE TABLE COTO_ANIMALES (
     ID_COTO INTEGER NOT NULL,
     ID_ANIMAL INTEGER NOT NULL,
     ACTIVO INTEGER DEFAULT 1,
-    CANTIDAD_MAXIMA INTEGER,  -- Límite por temporada
+    CANTIDAD_MAXIMA INTEGER,
     TEMPORADA VARCHAR(50),
     FOREIGN KEY (ID_COTO) REFERENCES COTOS(ID) ON DELETE CASCADE,
     FOREIGN KEY (ID_ANIMAL) REFERENCES ANIMALES(ID) ON DELETE CASCADE
@@ -323,7 +389,7 @@ CREATE TABLE CAPTURAS (
     FECHA_TIMESTAMP TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     LATITUD DOUBLE PRECISION,
     LONGITUD DOUBLE PRECISION,
-    VALIDADA INTEGER DEFAULT 0,  -- Para confirmación de administrador
+    VALIDADA INTEGER DEFAULT 0,
     OBSERVACIONES VARCHAR(500),
     FOREIGN KEY (ID_SOCIO) REFERENCES SOCIOS(ID) ON DELETE CASCADE,
     FOREIGN KEY (ID_COTO) REFERENCES COTOS(ID) ON DELETE CASCADE,
@@ -351,6 +417,7 @@ CREATE TABLE ADMIN_COTOS (
 # Ejecutar desde línea de comandos de Firebird
 isql -user SYSDBA -password masterkey
 SQL> INPUT 'database/schema_venatus.sql';
+SQL> INPUT 'database/perros_schema.sql';
 SQL> COMMIT;
 SQL> EXIT;
 ```
@@ -371,6 +438,12 @@ INSERT INTO ANIMALES (NOMBRE, DESCRIPCION, ICONO) VALUES
 -- Crear usuario superadmin por defecto
 INSERT INTO ADMIN_COTOS (USUARIO, CLAVE, NOMBRE, EMAIL, TIPO) VALUES
 ('superadmin', 'admin123', 'Administrador Principal', 'admin@venatus.com', 'superadmin');
+
+-- Datos de ejemplo para perros
+INSERT INTO PERROS (NOMBRE, IDENTIFICADOR, ACTIVO) VALUES
+('Rex', 'CHIP-001', 1),
+('Luna', 'CHIP-002', 1),
+('Thor', 'CHIP-003', 1);
 ```
 
 ---
@@ -379,20 +452,26 @@ INSERT INTO ADMIN_COTOS (USUARIO, CLAVE, NOMBRE, EMAIL, TIPO) VALUES
 
 ### 👤 Para Socios (Aplicación Android)
 
-#### 1. Inicio de Sesión
-- **Usuario y contraseña** proporcionados por administrador
-- **Autenticación segura** con validación en servidor
-- **Recordar credenciales** opcional
+#### 1. Gestión de Perros Propios
+- **Ver mis perros**: Listado de todos los perros asignados
+- **Registrar nuevo perro**: Con nombre e identificador único
+- **Actualizar ubicación**: Asignar ubicación GPS actual al perro
+- **Mostrar en mapa**: Visualizar ubicación de perros en el mapa
+- **Monitoreo automático**: Actualización periódica de ubicaciones
 
-#### 2. Selección de Coto
-- **Listado dinámico** de cotos disponibles
-- **Información detallada** de cada área
-- **Selección única** de coto activo
+#### 2. Flujo de Registro de Perro
+```
+1. Seleccionar "🐕 Mis Perros" en el menú
+2. Elegir "➕ Registrar nuevo perro"
+3. Completar nombre e identificador
+4. La ubicación actual se asignará automáticamente
+5. Confirmar registro
+```
 
 #### 3. Monitoreo de Ubicación
-- **Activación automática** de GPS
+- **Activación automática** de GPS para socios y perros
 - **Actualizaciones periódicas** cada 10 segundos
-- **Indicadores visuales** de estado
+- **Indicadores visuales** diferenciados (👤 socio, 🐕 perro)
 - **Notificaciones** de entrada/salida
 
 #### 4. Registro de Capturas
@@ -413,106 +492,87 @@ Flujo:
 
 ### 👑 Para Administradores (Panel Web)
 
-#### 1. Acceso al Sistema
-- **Login unificado** para todos los tipos de admin
-- **Redirección automática** según rol
-- **Panel personalizado** según permisos
-
-#### 2. Super Administrador
+#### Super Administrador
 ```
 Funciones disponibles:
-• Creación y modificación de cotos
-• Gestión completa de socios
-• Administración de otros administradores
-• Monitoreo global de todos los cotos
-• Reportes y estadísticas
-• Configuración del sistema
+• Creación y modificación avanzada de cotos
+• Gestión completa de socios (con DNI)
+• Administración completa de perros de caza
+• Gestión de otros administradores (CRUD completo)
+• Monitoreo global de todos los cotos, socios y perros
+• Modificación visual de polígonos de caza
+• Reportes y estadísticas combinadas
 ```
 
-#### 3. Administrador de Coto
+#### Administrador de Coto
 ```
 Funciones disponibles:
-• Monitoreo de socios en su coto asignado
-• Visualización de ubicaciones en tiempo real
+• Monitoreo combinado de socios y perros en su coto
+• Visualización diferenciada en mapa
+• Estadísticas actualizadas (socios + perros)
 • Validación de capturas
 • Gestión de especies específicas de su coto
-• Reportes de actividad
 ```
 
-#### 4. Gestión de Cotos
+#### Gestión de Perros (SuperAdmin)
 ```
-Proceso de creación:
-1. Dibujar polígono en el mapa interactivo
-2. Asignar nombre descriptivo
-3. Guardar en base de datos
-4. Asignar especies permitidas
-
-Proceso de modificación:
-1. Seleccionar coto existente
-2. Activar modo edición
-3. Modificar puntos del polígono
-4. Guardar cambios confirmados
+Proceso completo:
+1. Acceder a "🐕 Gestionar Perros" en el menú
+2. Registrar nuevo perro con formulario
+3. Asignar a socio propietario (opcional)
+4. Configurar ubicación inicial (opcional)
+5. Activar monitoreo en tiempo real
+6. Visualizar todos los perros en el mapa
 ```
 
-#### 5. Registro de Socios
+#### Modificación de Cotos
 ```
-Datos requeridos:
-• Nombre completo
-• DNI (documento único)
-• Usuario (único en el sistema)
-• Contraseña
-• Email (opcional)
-• Teléfono (9 dígitos)
+Proceso avanzado:
+1. Seleccionar "✏️ Modificar Coto" en el menú
+2. Elegir coto existente de la lista
+3. Cargar polígono en el mapa
+4. Activar modo edición dedicado
+5. Modificar puntos (arrastrar, añadir, eliminar)
+6. Finalizar edición y guardar cambios
 ```
 
 ---
 
-## 🔧 API Endpoints Principales
+## 🔧 API Endpoints Principales Actualizados
 
-### 🔐 Autenticación
-- `POST /validar-login` → Validar credenciales de socio  
-- `POST /registrar-socio` → Registrar nuevo socio con DNI
-- `POST /admin/login-unificado` → Login para administradores
+### 🐕 **Gestión de Perros**
+- `GET /perros` → Listar todos los perros
+- `GET /perros/:id` → Obtener perro específico
+- `POST /perros` → Crear nuevo perro
+- `PUT /perros/:id` → Actualizar perro
+- `PUT /perros/:id/estado` → Cambiar estado (activo/inactivo)
+- `GET /socios/:id/perros` → Perros de un socio específico
+- `GET /perros/:id/propietario` → Obtener propietario de un perro
+- `GET /perros/ubicaciones` → Ubicaciones en tiempo real de perros
 
-### 🗺️ Gestión de Cotos
+### 🗺️ Gestión de Cotos (Mejorada)
 - `GET /areas` → Listado completo de cotos  
 - `GET /areas/:id` → Información específica de un coto  
 - `POST /guardar` → Crear nuevo coto
-- `PUT /modificar-coto` → **NUEVO**: Editar coto existente
+- `PUT /modificar-coto` → **Editar coto existente**
 
-### 👥 Gestión de Socios
-- `GET /socios` → Listar todos los socios
-- `GET /socios/:id` → Información de socio específico
+### 👥 Gestión de Socios (Ampliado)
+- `GET /socios` → Listar todos los socios (incluye DNI)
+- `POST /registrar-socio` → Registrar socio con DNI
 - `PUT /socios/:id` → Actualizar datos de socio
 - `DELETE /socios/:id` → Desactivar socio
 
-### 🐾 Gestión de Animales
-- `GET /animales` → Todas las especies disponibles
-- `GET /cotos/:id/animales` → Animales asignados a un coto
-- `POST /cotos/:id/asignar-animales` → Asignar especies a coto
-
-### 🎯 Sistema de Capturas
-- `POST /capturas` → Registrar nueva captura
-- `GET /socios/:id/capturas` → Historial de capturas
-- `PUT /capturas/:id/validar` → Validar captura (admin)
-
-### 📍 Monitoreo en Tiempo Real
+### 📍 Monitoreo en Tiempo Real (Ampliado)
+- `GET /monitoreo/coto/:id/socios-con-perros` → Socios + perros en coto
 - `POST /socio/ubicacion` → Envío de ubicación desde app  
-- `GET /monitoreo/coto/:id/socios` → Socios en coto específico
-- `GET /monitoreo/global` → **NUEVO**: Visión global (superadmin)
+- `GET /monitoreo/global` → Visión global (superadmin)
 
-### ⚙️ Administración del Sistema
+### ⚙️ Administración del Sistema (Completo)
 - `GET /admin/listar` → Listar administradores
 - `POST /admin/crear` → Crear nuevo administrador
 - `PUT /admin/estado` → Cambiar estado de admin
-- `PUT /admin/actualizar` → **NUEVO**: Editar administrador
+- `PUT /admin/actualizar` → Editar administrador (formulario completo)
 - `DELETE /admin/:id` → Eliminar administrador
-
-### 🔧 Utilidades y Mantenimiento
-- `POST /inicializar-datos` → Inicializar estructura BD
-- `GET /backup` → Crear backup de datos
-- `GET /logs` → Ver logs del sistema
-- `GET /estadisticas` → Estadísticas de uso
 
 ---
 
@@ -543,12 +603,14 @@ Datos requeridos:
 
 ## 📊 Sistema de Monitoreo Avanzado
 
-### Algoritmo de Geofencing
+### Algoritmo de Geofencing para Socios y Perros
 ```javascript
-// Algoritmo punto-en-polígono (ray casting)
-function puntoDentroPoligono(lat, lng, poligono) {
+// Algoritmo punto-en-polígono optimizado
+function verificarUbicacionEnCoto(lat, lng, poligono, tipo = 'socio') {
     let inside = false;
-    for (let i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
+    const n = poligono.length;
+    
+    for (let i = 0, j = n - 1; i < n; j = i++) {
         const xi = poligono[i].lng, yi = poligono[i].lat;
         const xj = poligono[j].lng, yj = poligono[j].lat;
         
@@ -556,74 +618,86 @@ function puntoDentroPoligono(lat, lng, poligono) {
                          (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
         if (intersect) inside = !inside;
     }
+    
+    // Log específico según tipo (socio o perro)
+    console.log(`📍 ${tipo.toUpperCase()} en coto: ${inside}`);
     return inside;
 }
 ```
 
 ### Optimizaciones Implementadas
 - **Caché de polígonos** en memoria para consultas rápidas
-- **Simplificación de geometrías** para polígonos muy complejos
+- **Procesamiento por lotes** para múltiples usuarios y perros
 - **Detección por cuadros delimitadores** (bounding boxes) previa
-- **Procesamiento por lotes** para múltiples usuarios
+- **Algoritmos diferenciados** para socios y perros
 
 ### Notificaciones en Tiempo Real
 - **Cambios de estado** (entrada/salida de coto)
 - **Alerta de captura** para administradores
-- **Notificaciones push** en desarrollo para Android
-- **Registro histórico** de movimientos
+- **Monitoreo de perros** con actualizaciones periódicas
+- **Registro histórico** de movimientos de socios y perros
 
 ---
 
 ## 🎨 Interfaz de Usuario Mejorada
 
-### Panel Web Administrativo
-- **Diseño responsive** que funciona en móvil, tablet y escritorio
-- **Temas claro/oscuro** según preferencia del usuario
-- **Indicadores visuales** de estado del sistema
-- **Animaciones suaves** para transiciones
-- **Modales no intrusivos** para acciones importantes
+### Panel Web Administrativo - SuperAdmin
+- **Panel de perros dedicado** con CRUD completo
+- **Select dinámico** de socios para asignación
+- **Mapa interactivo** con marcadores diferenciados
+- **Modo edición de cotos** con herramientas visuales
+- **Estadísticas combinadas** en tiempo real
+
+### Panel Web Administrativo - Admin de Coto
+- **Visualización unificada** de socios y perros
+- **Iconos diferenciados** (👤 socio, 🐕 perro)
+- **Estadísticas específicas** de su coto
+- **Panel de control simplificado** y eficiente
 
 ### Aplicación Android
+- **Menú específico para perros** con todas las funciones
+- **Diálogos de gestión** (registrar, editar, ubicación)
+- **Mapa interactivo** con marcadores personalizados
+- **Monitoreo automático** de ubicaciones
 - **Material Design 3** con componentes modernos
-- **Navegación intuitiva** con bottom navigation
-- **Feedback táctil** en todas las interacciones
-- **Estados de carga** claramente indicados
-- **Mensajes de error** comprensibles para el usuario
 
 ---
 
-## 🔄 Flujos de Trabajo Principales
+## 🔄 Flujos de Trabajo Principales Actualizados
 
-### 1. Registro de Nueva Captura
+### 1. Registro y Monitoreo de Perro
 ```
-App Android → Seleccionar coto → Obtener ubicación GPS → 
-Listar especies disponibles → Seleccionar especie y cantidad → 
-Validar ubicación dentro del coto → Enviar al servidor → 
-Confirmación y actualización de historial
-```
-
-### 2. Creación de Nuevo Coto
-```
-Panel Web → Seleccionar "Delimitar coto" → Dibujar polígono en mapa → 
-Asignar nombre → Guardar en base de datos → 
-Asignar especies permitidas → Configurar administrador (opcional)
+Socio Android → Menú "🐕 Mis Perros" → "➕ Registrar nuevo perro" → 
+Completar datos → Ubicación automática → Confirmar → 
+Servidor registra perro → Asigna a socio → 
+Monitoreo automático cada 15 segundos → 
+Actualización en paneles web en tiempo real
 ```
 
-### 3. Modificación de Coto Existente
+### 2. Monitoreo Combinado (Admin de Coto)
 ```
-Panel Web → Seleccionar "Modificar Coto" → Elegir coto de lista → 
-Cargar en mapa → Activar modo edición → Modificar puntos → 
-Finalizar edición → Confirmar y guardar cambios → 
-Notificar a socios afectados (opcional)
+Admin accede panel → Inicia monitoreo → 
+Servidor obtiene: socios en coto + sus perros → 
+Procesa ubicaciones → Actualiza mapa con iconos diferenciados → 
+Muestra estadísticas combinadas → 
+Notifica cambios de estado
 ```
 
-### 4. Monitoreo de Socios
+### 3. Modificación de Coto (SuperAdmin)
 ```
-Servidor → Recibir ubicaciones periódicas → 
-Verificar cada ubicación contra polígonos de cotos → 
-Actualizar estado en tiempo real → 
-Notificar cambios a panel administrativo → 
-Almacenar histórico de movimientos
+SuperAdmin → "✏️ Modificar Coto" → Selecciona coto → 
+Carga polígono → Activa modo edición → Modifica puntos → 
+Finaliza edición → Confirma cambios → 
+Servidor actualiza perímetro → Notifica a socios afectados
+```
+
+### 4. Gestión Completa de Administradores
+```
+SuperAdmin → "👑 Gestionar Administradores" → 
+Lista existentes → "➕ Crear Nuevo" → 
+Completa formulario (incluye tipo y coto) → 
+Guarda → Edición en línea disponible → 
+Activación/desactivación granular
 ```
 
 ---
@@ -632,46 +706,49 @@ Almacenar histórico de movimientos
 
 ### Problemas Comunes y Soluciones
 
-#### 1. Error de Conexión a Base de Datos
+#### 1. Perros no aparecen en el mapa
 ```bash
-# Verificar que Firebird esté ejecutándose
-fbsvcmgr localhost:service_mgr info
+# Verificar que el perro tenga ubicación registrada
+SELECT * FROM PERROS WHERE POS_X IS NOT NULL AND POS_Y IS NOT NULL;
 
-# Verificar permisos de archivo
-ls -la /ruta/a/venatus.fdb
+# Verificar asignación a socio
+SELECT * FROM SOCIO_PERROS WHERE ID_PERRO = [ID_PERRO];
 
-# Probar conexión manual
-isql -user SYSDBA -password masterkey
+# Verificar que el monitoreo esté activo
+# En SuperAdmin: Panel de monitoreo → Estado activo
 ```
 
-#### 2. Problemas de Ubicación en Android
+#### 2. Error en modificación de coto
 ```
-1. Verificar permisos en Configuración → Aplicaciones → Venatus
-2. Activar "Alta precisión" en Configuración → Ubicación
-3. Probar en exteriores con cielo despejado
-4. Reiniciar dispositivo si persiste
-```
-
-#### 3. El Mapa no se Carga en el Panel Web
-```
-1. Verificar conexión a internet
-2. Comprobar consola del navegador (F12)
-3. Verificar que Leaflet CSS/JS estén cargados
-4. Probar en modo incógnito para descartar extensiones
+1. Verificar que el polígono tenga al menos 3 puntos
+2. Confirmar que se haya finalizado la edición antes de guardar
+3. Revisar consola del navegador para errores JavaScript
+4. Verificar permisos de SuperAdmin
 ```
 
-#### 4. Problemas con la API
-```bash
-# Verificar que el servidor esté ejecutándose
-curl http://localhost:3000/status
+#### 3. Problemas con asignación de perros a socios
+```sql
+-- Verificar relaciones existentes
+SELECT s.NOMBRE as Socio, p.NOMBRE as Perro
+FROM SOCIOS s
+INNER JOIN SOCIO_PERROS sp ON s.ID = sp.ID_SOCIO
+INNER JOIN PERROS p ON sp.ID_PERRO = p.ID;
 
-# Ver logs del servidor
-tail -f server.log
+-- Limpiar asignaciones si es necesario
+DELETE FROM SOCIO_PERROS WHERE ID_PERRO = [ID_PERRO];
+```
 
-# Probar endpoint específico
-curl -X POST http://localhost:3000/validar-login \
-  -H "Content-Type: application/json" \
-  -d '{"usuario":"test","contrasena":"test"}'
+#### 4. El monitoreo de perros no se actualiza
+```
+App Android:
+1. Verificar permisos de ubicación
+2. Confirmar que el monitoreo automático esté iniciado
+3. Revisar conexión a internet
+
+Panel Web:
+1. Verificar que el intervalo de actualización esté activo
+2. Revisar consola para errores de JavaScript
+3. Confirmar que el endpoint /perros/ubicaciones funcione
 ```
 
 ---
@@ -679,29 +756,41 @@ curl -X POST http://localhost:3000/validar-login \
 ## 🧪 Testing y Calidad
 
 ### Suite de Pruebas Implementada
-- **Pruebas unitarias** para funciones críticas
-- **Pruebas de integración** para API endpoints
-- **Pruebas de UI** para flujos principales
-- **Pruebas de rendimiento** para algoritmos de geofencing
+- **Pruebas unitarias** para algoritmos de geofencing
+- **Pruebas de integración** para endpoints de perros
+- **Pruebas de UI** para flujos de gestión de perros
+- **Pruebas de rendimiento** para monitoreo simultáneo
+
+### Casos de Prueba Específicos para Perros
+1. **Registro de perro** con y sin ubicación
+2. **Asignación a socio** y cambio de propietario
+3. **Monitoreo en tiempo real** con múltiples perros
+4. **Visualización en mapa** con iconos diferenciados
+5. **Integración con sistema de socios** existente
 
 ---
 
 ## 🌟 Características Únicas del Proyecto
 
 ### Innovaciones Técnicas
-1. **Algoritmo híbrido de geofencing** que combina múltiples técnicas para precisión máxima
-2. **Sistema de modificación incremental** de polígonos sin perder datos históricos
-3. **Arquitectura multi-tenancy** que permite múltiples organizaciones en una instancia
-4. **Sincronización offline** para áreas sin cobertura móvil (en desarrollo)
+1. **Sistema híbrido de monitoreo** que combina socios + perros en tiempo real
+2. **Modificación visual de polígonos** con herramientas profesionales
+3. **Gestión multi-rol completa** con permisos granulares
+4. **Integración DNI** para identificación única de socios
+5. **Arquitectura tri-plataforma** (Web SuperAdmin, Web Admin, Android) sincronizada
 
 ### Valor Educativo
-- **Ejemplo real** de aplicación multi-plataforma completa
-- **Integración de múltiples tecnologías** en un solo proyecto
-- **Documentación exhaustiva** pensada para aprendizaje
-- **Código comentado** siguiendo mejores prácticas
+- **Ejemplo real** de sistema empresarial completo
+- **Integración de 8 tecnologías diferentes** en un solo proyecto
+- **Documentación exhaustiva** con ejemplos prácticos
+- **Código comentado** siguiendo estándares industriales
+- **Arquitectura escalable** preparada para producción
 
-### Aplicaciones Prácticas
-- **Gestión de reservas naturales** y áreas protegidas
-- **Monitoreo de equipos de campo** en agricultura
-- **Control de acceso** a áreas restringidas
-- **Seguimiento logístico** en grandes extensiones
+### Aplicaciones Prácticas Extendidas
+- **Gestión de equipos de caza** con socios y perros
+- **Monitoreo de fauna** en reservas naturales
+- **Control de accesos** con geolocalización
+- **Seguimiento logístico** de equipos y animales
+- **Sistema de emergencia** para localización en campo
+
+---

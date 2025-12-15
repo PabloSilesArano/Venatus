@@ -1598,7 +1598,7 @@
 
                     const data = await respuesta.json();
                     alert(data.mensaje || "Error al guardar el área.");
-                    cargarAreas(); // actualizar lista de áreas
+                    cargarAreas();
                 } catch (error) {
                     console.error("Error al guardar:", error);
                     alert("Error de conexión al servidor");
@@ -1884,7 +1884,6 @@
             });
 
             function mostrarPanelAdmin() {
-            // Crear overlay si no existe
             if (!document.getElementById('adminOverlay')) {
                 const overlay = document.createElement('div');
                 overlay.id = 'adminOverlay';
@@ -2260,7 +2259,6 @@
             });
 
             function mostrarPanelModificacion() {
-                // Crear overlay si no existe
                 if (!document.getElementById('adminOverlay')) {
                     const overlay = document.createElement('div');
                     overlay.id = 'adminOverlay';
@@ -2580,7 +2578,6 @@
         });
 
         function mostrarPanelPerros() {
-            // Crear overlay si no existe
             if (!document.getElementById('adminOverlay')) {
                 const overlay = document.createElement('div');
                 overlay.id = 'adminOverlay';
