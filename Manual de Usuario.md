@@ -8,7 +8,7 @@
 4. [Panel Web para Super Administrador](https://github.com/PabloSilesArano/Venatus/blob/main/Manual%20de%20Usuario.md#4-gesti%C3%B3n-de-perros-de-caza-app-android)
 5. [Panel Web para Administrador de Coto](https://github.com/PabloSilesArano/Venatus/blob/main/Manual%20de%20Usuario.md#5-panel-web-para-super-administrador)
 6. [Gestión de Perros de Caza](https://github.com/PabloSilesArano/Venatus/blob/main/Manual%20de%20Usuario.md#6-gesti%C3%B3n-de-perros-superadmin)
-7. [Solución de Problemas](#solución-de-problemas)
+7. [Solución de Problemas](https://github.com/PabloSilesArano/Venatus/blob/main/Manual%20de%20Usuario.md#7-panel-web-para-administrador-de-coto)
 8. [Preguntas Frecuentes](#preguntas-frecuentes)
 9. [Contacto y Soporte](#contacto-y-soporte)
 
