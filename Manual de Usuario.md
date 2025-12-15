@@ -4,7 +4,7 @@
 
 1. [Introducción](https://github.com/PabloSilesArano/Venatus/blob/main/Manual%20de%20Usuario.md#1-introducci%C3%B3n)
 2. [Acceso al Sistema](https://github.com/PabloSilesArano/Venatus/blob/main/Manual%20de%20Usuario.md#2-acceso-al-sistema)
-3. [Aplicación Android para Socios](#aplicación-android-para-socios)
+3. [Aplicación Android para Socios](https://github.com/PabloSilesArano/Venatus/blob/main/Manual%20de%20Usuario.md#3-aplicaci%C3%B3n-android-para-socios)
 4. [Panel Web para Super Administrador](#panel-web-para-super-administrador)
 5. [Panel Web para Administrador de Coto](#panel-web-para-administrador-de-coto)
 6. [Gestión de Perros de Caza](#gestión-de-perros-de-caza)
