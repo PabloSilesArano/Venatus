@@ -2,7 +2,7 @@
 
 ## Índice
 
-1. [Introducción](#Introducción)
+1. [Introducción](https://github.com/PabloSilesArano/Venatus/blob/main/Manual%20de%20Usuario.md#1-introducci%C3%B3n)
 2. [Acceso al Sistema](#acceso-al-sistema)
 3. [Aplicación Android para Socios](#aplicación-android-para-socios)
 4. [Panel Web para Super Administrador](#panel-web-para-super-administrador)
